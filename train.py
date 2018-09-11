@@ -15,8 +15,8 @@ max_epoch = 30
 train_path = 'datasets/train.txt'
 valid_path = 'datasets/dev.txt'
 save_dir = 'mai_all'
-gpuid = -1
-log_interval = 1
+gpuid = 1
+log_interval = 100
 
 
 class SaveModel(chainer.training.Extension):
@@ -37,7 +37,8 @@ def seq_convert(batch, device=None):
     lxs, rxs, ts = zip(*batch)
     lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
-    return (lxs_block, rxs_block, ts)
+    ts_block = convert.concat_examples(ts, device)
+    return (lxs_block, rxs_block, ts_block)
 
 
 def main():
@@ -68,10 +69,10 @@ def main():
     trainer = chainer.training.Trainer(updater, (max_epoch, 'epoch'), out=save_dir)
     trainer.extend(extensions.Evaluator(valid_iter, model, converter=seq_convert, device=gpuid))
     trainer.extend(SaveModel(model, save_dir))
-    trainer.extend(extensions.LogReport(trigger=(log_interval, 'iteration')))
+    trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'iteration', 'main/loss', 'main/accuracy',
-        'validation/main/loss', 'validation/main/accuracy', 'elapsed_time']), trigger=(log_interval, 'iteration'))
+        ['epoch', 'main/loss', 'main/accuracy',
+        'validation/main/loss', 'validation/main/accuracy', 'elapsed_time']))
     trainer.extend(extensions.ProgressBar())
 
     trainer.run()
