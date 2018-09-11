@@ -5,13 +5,13 @@ from train import seq_convert
 import chainer
 from chainer.backends import cuda
 
-save_dir = 'test'
+save_dir = 'mai_all'
 model_name = 'model-e10.npz'
-test_path = 'datasets/mai_dev.txt'
+test_path = 'datasets/dev.txt'
 batch_size = 2
-n_units = 100
+n_units = 300
 n_layer = 1
-dropout = 0.0
+dropout = 0.1
 gpuid = -1
 
 
@@ -48,3 +48,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
