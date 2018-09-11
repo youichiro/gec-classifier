@@ -9,12 +9,12 @@ from chainer.backends import cuda
 
 def main():
     # args
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batchsize', '-b', type=int, default=300)
-    parser.add_argument('--gpuid', '-g', type=int, default=-1)
-    parser.add_argument('--save_dir', '-s', required=True, help='Directory to save results')
-    parser.add_argument('--test', '-t', required=True, help='Test dataset file')
-    parser.add_argument('--model', '-m', required=True, help='Trained model file')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--batchsize', type=int, default=300, help='Batch size')
+    parser.add_argument('--gpuid', type=int, default=-1, help='GPU ID')
+    parser.add_argument('--save_dir', required=True, help='Directory to save results')
+    parser.add_argument('--test', required=True, help='Test dataset file')
+    parser.add_argument('--model', required=True, help='Trained model file')
     args = parser.parse_args()
     print(json.dumps(args.__dict__, indent=2))
 

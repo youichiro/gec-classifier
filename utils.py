@@ -7,9 +7,6 @@ from collections import Counter
 
 IGNORE_ID = -1
 UNK_ID = 0
-vocab_size = 40000
-min_freq = 0
-
 split_regex = r'^(.*) <(.)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
 
@@ -55,7 +52,7 @@ def split_text(lines):
     return left_words, right_words, targets
 
 
-def make_dataset(path, w2id=None, classes=None):
+def make_dataset(path, w2id=None, classes=None, vocab_size=40000, min_freq=1):
     """
     example return:
         dataset = [
