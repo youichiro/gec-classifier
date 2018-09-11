@@ -1,6 +1,7 @@
 import re
 import mojimoji
 import numpy
+from tqdm import tqdm
 from collections import Counter
 
 
@@ -45,7 +46,7 @@ def make_target_array(target, classes):
 
 def split_text(lines):
     left_words, right_words, targets = [], [], []
-    for line in lines:
+    for line in tqdm(lines):
         m = re.match(split_regex, line.rstrip())
         left_text, target, right_text = m.groups()
         left_words.append(clean_text(left_text).split())

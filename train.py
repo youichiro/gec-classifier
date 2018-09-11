@@ -15,7 +15,8 @@ max_epoch = 30
 train_path = 'datasets/train.txt'
 valid_path = 'datasets/dev.txt'
 save_dir = 'mai_all'
-gpuid = 1
+gpuid = -1
+log_interval = 1
 
 
 class SaveModel(chainer.training.Extension):
@@ -55,7 +56,7 @@ def main():
     right_encoder = nets.RNNEncoder(n_vocab, n_units, n_layers, dropout)
     model = nets.ContextClassifier(left_encoder, right_encoder, n_class)
     if gpuid >= 0:
-        cuda.get_device(gpuid).use()
+        cuda.get_device_from_id(gpuid).use()
         model.to_gpu(gpuid)
 
     optimizer = chainer.optimizers.Adam()
@@ -67,10 +68,10 @@ def main():
     trainer = chainer.training.Trainer(updater, (max_epoch, 'epoch'), out=save_dir)
     trainer.extend(extensions.Evaluator(valid_iter, model, converter=seq_convert, device=gpuid))
     trainer.extend(SaveModel(model, save_dir))
-    trainer.extend(extensions.LogReport())
+    trainer.extend(extensions.LogReport(trigger=(log_interval, 'iteration')))
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'main/accuracy',
-        'validation/main/loss', 'validation/main/accuracy', 'elapsed_time']))
+        ['epoch', 'iteration', 'main/loss', 'main/accuracy',
+        'validation/main/loss', 'validation/main/accuracy', 'elapsed_time']), trigger=(log_interval, 'iteration'))
     trainer.extend(extensions.ProgressBar())
 
     trainer.run()
