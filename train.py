@@ -9,13 +9,13 @@ from chainer.backends import cuda
 from chainer.training import extensions
 
 n_layers = 1
-n_units = 100
+n_units = 300
 dropout = 0.1
 max_epoch = 30
 train_path = 'datasets/train.txt'
 valid_path = 'datasets/dev.txt'
-save_dir = 'test'
-gpuid = -1
+save_dir = 'mai_all'
+gpuid = 1
 
 
 class SaveModel(chainer.training.Extension):
@@ -45,6 +45,7 @@ def main():
     n_vocab = len(w2id)
     n_class = len(classes)
     holds = {'vocab': w2id, 'classes': classes}
+    os.makedirs(save_dir, exist_ok=True)
     pickle.dump(holds, open(save_dir + '/holds.pkl', 'wb'))
 
     train_iter = chainer.iterators.SerialIterator(train, batch_size=3)
@@ -53,14 +54,13 @@ def main():
     left_encoder = nets.RNNEncoder(n_vocab, n_units, n_layers, dropout)
     right_encoder = nets.RNNEncoder(n_vocab, n_units, n_layers, dropout)
     model = nets.ContextClassifier(left_encoder, right_encoder, n_class)
-
     if gpuid >= 0:
         cuda.get_device(gpuid).use()
         model.to_gpu(gpuid)
 
     optimizer = chainer.optimizers.Adam()
     optimizer.setup(model)
-    
+
     updater = chainer.training.StandardUpdater(train_iter, optimizer,
                                                converter=seq_convert, device=gpuid)
 

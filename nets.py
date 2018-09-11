@@ -89,4 +89,4 @@ class ContextClassifier(chainer.Chain):
         elif argmax:
             return self.xp.argmax(concat_outputs.data, axis=1)
         else:
-            return concat_outputs        
+            return concat_outputs

@@ -8,13 +8,13 @@ from tqdm import tqdm
 import random
 
 
-data_path = 'datasets/mai2000.1k.txt'
+data_path = 'datasets/mai2000.all.txt'
 save_train_path = 'datasets/train.txt'
 save_dev_path = 'datasets/dev.txt'
-mecab_dict_path = '/usr/local/mecab/lib/mecab/dic/unidic'
+mecab_dict_path = '/tools/env/lib/mecab/dic/unidic'
 TARGETS = ['が', 'を', 'に', 'で']
 TARGET_PART = '助詞-格助詞'
-valid_size = 100
+valid_size = 1000
 max_len = 70
 
 
@@ -59,7 +59,7 @@ def main():
             target_id = random.choice(target_idx)
         marked_sentence = '{} <{}> {}'.format(
             ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
-        
+
         save_path = save_dev_path if count < valid_size else save_train_path
         open(save_path, 'a').write(marked_sentence + '\n')
         count += 1
@@ -67,3 +67,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
