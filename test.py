@@ -1,41 +1,50 @@
-import pickle
+import json
+import argparse
 import nets
-from utils import make_dataset
 from train import seq_convert
+from utils import make_dataset
 import chainer
 from chainer.backends import cuda
 
-save_dir = 'mai_all'
-model_name = 'model-e10.npz'
-test_path = 'datasets/dev.txt'
-batch_size = 2
-n_units = 300
-n_layer = 1
-dropout = 0.1
-gpuid = -1
-
 
 def main():
-    holds = pickle.load(open(save_dir + '/holds.pkl', 'rb'))
-    w2id = holds['vocab']
+    # args
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batchsize', '-b', type=int, default=300)
+    parser.add_argument('--gpuid', '-g', type=int, default=-1)
+    parser.add_argument('--save_dir', '-s', required=True, help='Directory to save results')
+    parser.add_argument('--test', '-t', required=True, help='Test dataset file')
+    parser.add_argument('--model', '-m', required=True, help='Trained model file')
+    args = parser.parse_args()
+    print(json.dumps(args.__dict__, indent=2))
+
+    # prepare
+    vocab = json.load(open(args.save_dir + '/vocab.json', 'r'))
+    w2id = vocab['w2id']
     id2w = {v: k for k, v in w2id.items()}
-    classes = holds['classes']
+    classes = vocab['classes']
     reversed_classes = {v: k for k, v in classes.items()}
     n_vocab = len(w2id)
     n_class = len(classes)
 
+    opts = json.load(open(args.save_dir + '/opts.json'))
+    n_units = opts['unit']
+    n_layer = opts['layer']
+    dropout = opts['dropout']
+
+    # model
     left_encoder = nets.RNNEncoder(n_vocab, n_units, n_layer, dropout)
     right_encoder = nets.RNNEncoder(n_vocab, n_units, n_layer, dropout)
     model = nets.ContextClassifier(left_encoder, right_encoder, n_class)
-    chainer.serializers.load_npz(save_dir + '/' + model_name, model)
-    if gpuid >= 0:
-        cuda.get_device(gpuid).use()
-        model.to_gpu(gpuid)
+    chainer.serializers.load_npz(args.model, model)
+    if args.gpuid >= 0:
+        cuda.get_device(args.gpuid).use()
+        model.to_gpu(args.gpuid)
 
-    test, _, _ = make_dataset(test_path, w2id, classes)
-
-    for i in range(0, len(test), batch_size):
-        lxs, rxs, ts = seq_convert(test[i:i + batch_size], gpuid)
+    # test
+    test, _, _ = make_dataset(args.test, w2id, classes)
+    for i in range(0, len(test), args.batchsize):
+        lxs, rxs, ts = seq_convert(test[i:i + args.batchsize], args.gpuid)
         predict_classes = model.predict(lxs, rxs, argmax=True)
         for i in range(len(lxs)):
             left_text = ''.join([id2w.get(idx, '') for idx in lxs[i]])
@@ -48,4 +57,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

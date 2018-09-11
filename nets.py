@@ -3,8 +3,6 @@ import chainer
 import chainer.functions as F
 import chainer.links as L
 
-embed_init = chainer.initializers.Uniform(.25)
-
 
 def sequence_embed(embed, xs, dropout=0.):
     x_len = [len(x) for x in xs]
@@ -19,7 +17,7 @@ class RNNEncoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1):
         super().__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, n_units, initialW=embed_init)
+            self.embed = L.EmbedID(n_vocab, n_units, initialW=None)
             self.encoder = L.NStepLSTM(n_layers, n_units, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
