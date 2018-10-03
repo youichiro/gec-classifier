@@ -148,7 +148,7 @@ class AttnContextClassifier(chainer.Chain):
             self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
-            self.wc = L.Linear(2 * n_units, n_units)
+            self.wc = L.Linear(n_units, n_units)
             self.wo = L.Linear(n_units, n_class)
         self.n_units = n_units
         self.dropout = dropout
@@ -168,11 +168,11 @@ class AttnContextClassifier(chainer.Chain):
         _, _, ros = self.right_encoder(rxs)
         los = F.stack(los)
         ros = F.stack(ros)
-        lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, xlen, n_units)
-        rstate = self.right_attn(ros, self.make_oys(ros))  # rstate: (bs, xlen, n_units)
+        lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, lxlen, n_units)
+        rstate = self.right_attn(ros, self.make_oys(ros))  # rstate: (bs, rxlen, n_units)
 
-        state = F.concat((lstate, rstate), axis=2)  # state: (bs, xlen, 2*n_units)
-        relu_state = F.relu(F.stack(sequence_embed(self.wc, state)))  # relu_state: (bs, xlen, n_units)
+        state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*xlen, n_units)
+        relu_state = F.relu(F.stack(sequence_embed(self.wc, state)))  # relu_state: (bs, 2*xlen, n_units)
         concat_outputs = sequence_embed(self.wo, relu_state)
         if softmax:
             return F.softmax(concat_outputs).data
