@@ -67,12 +67,12 @@ class Classifier(chainer.Chain):
 
 
 class ContextClassifier(chainer.Chain):
-    def __init__(self, left_encoder, right_encoder, n_class, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = left_encoder
-            self.right_encoder = right_encoder
-            self.output = L.Linear(left_encoder.out_units + right_encoder.out_units, n_class)
+            self.left_encoder = Encoder(n_vocab, n_units, n_layers, dropout)
+            self.right_encoder = Encoder(n_vocab, n_units, n_layers, dropout)
+            self.output = L.Linear(n_units + n_units, n_class)
         self.dropout = dropout
 
     def __call__(self, lxs, rxs, ts):
@@ -85,8 +85,9 @@ class ContextClassifier(chainer.Chain):
         return loss
 
     def predict(self, lxs, rxs, softmax=False, argmax=False):
+        rxs = rxs[:, ::-1]
         left_encodings = F.dropout(self.left_encoder(lxs), ratio=self.dropout)
-        right_encodings = F.dropout(self.right_encoder(rxs[:, ::-1]), ratio=self.dropout)
+        right_encodings = F.dropout(self.right_encoder(rxs), ratio=self.dropout)
         concat_encodings = F.concat((left_encodings, right_encodings))
         concat_outputs = self.output(concat_encodings)
         if softmax:
