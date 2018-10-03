@@ -63,9 +63,7 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    left_encoder = nets.RNNEncoder(n_vocab, args.unit, args.layer, args.dropout)
-    right_encoder = nets.RNNEncoder(n_vocab, args.unit, args.layer, args.dropout)
-    model = nets.ContextClassifier(left_encoder, right_encoder, n_class)
+    model = nets.AttnContextClassifier(n_vocab, args.unit , n_class)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
