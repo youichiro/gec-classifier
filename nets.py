@@ -13,22 +13,29 @@ def sequence_embed(embed, xs, dropout=0.):
     return exs
 
 
-class RNNEncoder(chainer.Chain):
+class Encoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1):
         super().__init__()
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None)
-            self.encoder = L.NStepLSTM(n_layers, n_units, n_units, dropout)
+            self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
         self.dropout = dropout
 
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
-        last_h, last_c, ys = self.encoder(None, None, exs)
+        last_h, last_c, ys = self.rnn(None, None, exs)
         assert (last_h.shape == (self.n_layers, len(xs), self.out_units))
         concat_outputs = last_h[-1]
         return concat_outputs
+
+
+class AttnEncoder(Encoder):
+    def __call__(self, xs):
+        exs = sequence_embed(self.embed, xs, self.dropout)
+        hx, cx, oxs = self.rnn(None, None, exs)
+        return hx, cx, oxs
 
 
 class Classifier(chainer.Chain):
@@ -88,3 +95,95 @@ class ContextClassifier(chainer.Chain):
             return self.xp.argmax(concat_outputs.data, axis=1)
         else:
             return concat_outputs
+
+
+class GlobalAttention(chainer.Chain):
+    def __init__(self, n_units, score):
+        super().__init__()
+        with self.init_scope():
+            self.n_units = n_units
+            self.score = score
+
+            if score == 'general':
+                self.wg = L.Linear(n_units, n_units)
+            elif score == 'concat':
+                self.wa = L.Linear(2*n_units, 1)
+
+    def __call__(self, oxs, oys):
+        self.bs, self.xlen, _ = oxs.shape
+        _, self.ylen, _ = oys.shape
+
+        if self.score == 'dot':
+            scores = self.dot(oys, oxs)
+        elif self.score == 'general':
+            scores = self.general(oys, oxs)
+
+        oxs = F.broadcast_to(oxs, (self.ylen, self.bs, self.xlen, self.n_units))
+        oxs = F.transpose(oxs, (1, 0, 2, 3))
+        scores = F.broadcast_to(scores, (self.n_units, self.bs, self.ylen, self.xlen))
+        scores = F.transpose(scores, axes=(1, 2, 3, 0))
+        ct = F.sum(oxs*scores, axis=2)  # ct: (bs, ylen, n_units)
+        return ct
+
+    def dot(self, oxs, oys):
+        oxs = F.broadcast_to(oxs, (self.ylen, self.bs, self.xlen, self.n_units))
+        oys = F.broadcast_to(oys, (self.xlen, self.bs, self.ylen, self.n_units))
+        oxs = F.transpose(oxs, (1, 0, 2, 3))
+        oys = F.transpose(oys, (1, 2, 0, 3))
+        scores = F.sum(oxs*oys, axis=3)
+        scores = F.softmax(scores, axis=2)
+        return scores
+
+    def general(self, oxs, oys):
+        oys = F.stack(sequence_embed(self.wg, oys))
+        scores = self.dot(oxs, oys)
+        return scores
+
+
+class AttnContextClassifier(chainer.Chain):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1):
+        super().__init__()
+        with self.init_scope():
+            self.left_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout)
+            self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout)
+            self.left_attn = GlobalAttention(n_units, score='dot')
+            self.right_attn = GlobalAttention(n_units, score='dot')
+            self.wc = L.Linear(2 * n_units, n_units)
+            self.wo = L.Linear(n_units, n_class)
+        self.n_units = n_units
+        self.dropout = dropout
+
+    def __call__(self, lxs, rxs, ts):
+        concat_outputs = self.predict(lxs, rxs)
+        concat_truths = F.concat(ts, axis=0)
+        loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
+        accuracy = F.accuracy(concat_outputs, concat_truths)
+        chainer.reporter.report({'loss': loss.data}, self)
+        chainer.reporter.report({'accuracy': accuracy.data}, self)
+        return loss
+
+    def predict(self, lxs, rxs, softmax=False, argmax=False):
+        rxs = rxs[:, ::-1]
+        _, _, los = self.left_encoder(lxs)
+        _, _, ros = self.right_encoder(rxs)
+        los = F.stack(los)
+        ros = F.stack(ros)
+        lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, xlen, n_units)
+        rstate = self.right_attn(ros, self.make_oys(ros))  # rstate: (bs, xlen, n_units)
+
+        state = F.concat((lstate, rstate), axis=2)  # state: (bs, xlen, 2*n_units)
+        relu_state = F.relu(F.stack(sequence_embed(self.wc, state)))  # relu_state: (bs, xlen, n_units)
+        concat_outputs = sequence_embed(self.wo, relu_state)
+        if softmax:
+            return F.softmax(concat_outputs).data
+        elif argmax:
+            return self.xp.argmax(concat_outputs.data, axis=1)
+        else:
+            return concat_outputs
+
+    def make_oys(self, oxs):
+        bs, xlen, _ = oxs.shape  # oxs: (bs, xlen, n_units)
+        oxs_last = oxs[::, -1]  # 最後の列の値の配列 oxs_last: (bs, u_units)
+        oys = F.broadcast_to(oxs_last, (xlen, bs, self.n_units))  # xlenだけ伸ばす oys: (xlen, bs, n_units)
+        oys = F.transpose(oys, (1, 0, 2))  # 転置 oys: (bs, xlen, n_units)
+        return oys
