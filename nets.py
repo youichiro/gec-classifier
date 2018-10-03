@@ -173,7 +173,7 @@ class AttnContextClassifier(chainer.Chain):
 
         state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*xlen, n_units)
         relu_state = F.relu(F.stack(sequence_embed(self.wc, state)))  # relu_state: (bs, 2*xlen, n_units)
-        concat_outputs = sequence_embed(self.wo, relu_state)
+        concat_outputs = F.stack(sequence_embed(self.wo, relu_state))
         if softmax:
             return F.softmax(concat_outputs).data
         elif argmax:
