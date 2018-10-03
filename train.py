@@ -63,8 +63,8 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer)
-    # model = nets.AttnContextClassifier(n_vocab, args.unit , n_class, args.layer)
+    # model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer)
+    model = nets.AttnContextClassifier(n_vocab, args.unit , n_class, args.layer)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
