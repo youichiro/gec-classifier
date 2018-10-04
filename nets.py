@@ -137,11 +137,11 @@ class GlobalAttention(chainer.Chain):
 
 
 class AttnContextClassifier(chainer.Chain):
-    def __init__(self, left_encoder, right_encoder, n_units, n_class, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = left_encoder
-            self.right_encoder = right_encoder
+            self.left_encoder = Encoder(n_vocab, n_units, n_layers, dropout)
+            self.right_encoder = Encoder(n_vocab, n_units, n_layers, dropout)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)
