@@ -45,10 +45,10 @@ def main():
         lxs, rxs, ts = seq_convert(test[i:i + args.batchsize], args.gpuid)
         predict_classes = model.predict(lxs, rxs, argmax=True)
         for i in range(len(lxs)):
-            left_text = ''.join([id2w.get(idx, '') for idx in lxs[i]])
-            right_text = ''.join([id2w.get(idx, '') for idx in rxs[i]])
-            target = reversed_classes.get(ts[i][0])
-            predict = reversed_classes.get(predict_classes[i])
+            left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[i]])
+            right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[i]])
+            target = reversed_classes.get(int(ts[i][0]))
+            predict = reversed_classes.get(int(predict_classes[i])
             result = True if predict == target else False
             print('{} {}({}) {} {}'.format(left_text, predict, target, right_text, result))
 
