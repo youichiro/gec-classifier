@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--test', required=True, help='Test dataset file')
     parser.add_argument('--model', required=True, help='Trained model file')
     args = parser.parse_args()
-    print(json.dumps(args.__dict__, indent=2))
+    # print(json.dumps(args.__dict__, indent=2))
 
     # prepare
     vocab = json.load(open(args.save_dir + '/vocab.json', 'r'))
@@ -55,7 +55,7 @@ def main():
             count += 1
             t += 1 if result else 0
 
-    print('Accuracy {:.2}% ({}/{})'.format(t / count * 100, t, count))
+    print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
 
 if __name__ == '__main__':
