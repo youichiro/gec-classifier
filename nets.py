@@ -5,7 +5,7 @@ import chainer.links as L
 from utils import IGNORE_ID
 
 
-def sequence_embed(embed, xs, dropout=0.):
+def sequence_embed(embed, xs, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))

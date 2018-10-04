@@ -15,12 +15,12 @@ class SaveModel(chainer.training.Extension):
     priority = chainer.training.PRIORITY_WRITER
 
     def __init__(self, model, save_dir):
-        self.model = model.to_cpu()
+        self.model = model
         self.save_dir = save_dir
 
     def __call__(self, trainer):
         model_name = 'model-e{}.npz'.format(trainer.updater.epoch)
-        chainer.serializers.save_npz(self.save_dir + '/' + model_name, self.model)
+        chainer.serializers.save_npz(self.save_dir + '/' + model_name, self.model.to_cpu())
 
 
 def seq_convert(batch, device=None):
