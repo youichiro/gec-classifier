@@ -33,7 +33,9 @@ def main():
     dropout = opts['dropout']
 
     # model
-    model = nets.ContextClassifier(n_vocab, n_units, n_class, n_layer, dropout)
+    left_encoder = nets.Encoder(n_vocab, n_units, n_layer, dropout)
+    right_encoder = nets.Encoder(n_vocab, n_units, n_layer, dropout)
+    model = nets.ContextClassifier(left_encoder, right_encoder, n_units, n_class)
     chainer.serializers.load_npz(args.model, model)
     if args.gpuid >= 0:
         cuda.get_device(args.gpuid).use()
