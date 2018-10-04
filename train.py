@@ -20,7 +20,7 @@ class SaveModel(chainer.training.Extension):
 
     def __call__(self, trainer):
         model_name = 'model-e{}.npz'.format(trainer.updater.epoch)
-        chainer.serializers.save_npz(self.save_dir + '/' + model_name, self.model.to_cpu())
+        chainer.serializers.save_npz(self.save_dir + '/' + model_name, self.model)
 
 
 def seq_convert(batch, device=None):
