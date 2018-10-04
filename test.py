@@ -48,7 +48,7 @@ def main():
             left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[i]])
             right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[i]])
             target = reversed_classes.get(int(ts[i][0]))
-            predict = reversed_classes.get(int(predict_classes[i])
+            predict = reversed_classes.get(int(predict_classes[i]))
             result = True if predict == target else False
             print('{} {}({}) {} {}'.format(left_text, predict, target, right_text, result))
 
