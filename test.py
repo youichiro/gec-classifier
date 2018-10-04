@@ -40,17 +40,22 @@ def main():
         model.to_gpu(args.gpuid)
 
     # test
+    count, t = 0, 0
     test, _, _ = make_dataset(args.test, w2id, classes)
     for i in range(0, len(test), args.batchsize):
         lxs, rxs, ts = seq_convert(test[i:i + args.batchsize], args.gpuid)
         predict_classes = model.predict(lxs, rxs, argmax=True)
-        for i in range(len(lxs)):
-            left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[i]])
-            right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[i]])
-            target = reversed_classes.get(int(ts[i][0]))
-            predict = reversed_classes.get(int(predict_classes[i]))
+        for j in range(len(lxs)):
+            left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[j]])
+            right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[j]])
+            target = reversed_classes.get(int(ts[j][0]))
+            predict = reversed_classes.get(int(predict_classes[j]))
             result = True if predict == target else False
-            print('{} {}({}) {} {}'.format(left_text, predict, target, right_text, result))
+            # print('{} {}({}) {} {}'.format(left_text, predict, target, right_text, result))
+            count += 1
+            t += 1 if result else 0
+
+    print('Accuracy {:.2}% ({}/{})'.format(t / count * 100, t, count))
 
 
 if __name__ == '__main__':
