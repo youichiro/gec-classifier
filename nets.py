@@ -2,6 +2,7 @@ import numpy
 import chainer
 import chainer.functions as F
 import chainer.links as L
+from utils import IGNORE_ID
 
 
 def sequence_embed(embed, xs, dropout=0.):
@@ -17,7 +18,7 @@ class Encoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1):
         super().__init__()
         with self.init_scope():
-            self.embed = L.EmbedID(n_vocab, n_units, initialW=None)
+            self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
             self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
