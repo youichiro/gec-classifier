@@ -15,7 +15,7 @@ class SaveModel(chainer.training.Extension):
     priority = chainer.training.PRIORITY_WRITER
 
     def __init__(self, model, save_dir):
-        self.model = model
+        self.model = model.to_cpu()
         self.save_dir = save_dir
 
     def __call__(self, trainer):
@@ -64,7 +64,9 @@ def main():
 
     # model
     # model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer)
-    model = nets.AttnContextClassifier(n_vocab, args.unit , n_class, args.layer)
+    left_encoder = nets.AttnEncoder(n_vocab, args.unit, args.layer, args.dropout)
+    right_encoder = nets.AttnEncoder(n_vocab, args.unit, args.layer, args.dropout)
+    model = nets.AttnContextClassifier(left_encoder, right_encoder, args.unit, n_class)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
