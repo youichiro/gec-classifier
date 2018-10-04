@@ -119,31 +119,15 @@ class GlobalAttention(chainer.Chain):
         elif self.score == 'general':
             scores = self.general(oys, oxs)
 
-        # oxs: (bs, xlen, unit)
         scores = F.broadcast_to(scores, (self.n_units, self.bs, self.xlen))
         scores = F.transpose(scores, (1, 2, 0))  # scores: (bs, xlen, unit)
         ct = F.sum(oxs * scores, axis=1)  # ct: (bs, unit)
         return ct
 
-        # oxs = F.broadcast_to(oxs, (self.ylen, self.bs, self.xlen, self.n_units))
-        # oxs = F.transpose(oxs, (1, 0, 2, 3))  # oxs: (bs, ylen, xlen, unit)
-        # scores = F.broadcast_to(scores, (self.n_units, self.bs, self.ylen, self.xlen))
-        # scores = F.transpose(scores, axes=(1, 2, 3, 0))  # scores: (bs, ylen, xlen, unit)
-        # ct = F.sum(oxs*scores, axis=2)  # ct: (bs, ylen, unit) → (bs, unit)にしたい
-        # return ct
-
     def dot(self, oxs, oys):
         scores = F.sum(oxs * oys, axis=2)  # scores: (bs, xlen)
         scores = F.softmax(scores, axis=1)  # scores: (bs, xlen)
         return scores
-
-        # oxs = F.broadcast_to(oxs, (self.ylen, self.bs, self.xlen, self.n_units))
-        # oys = F.broadcast_to(oys, (self.xlen, self.bs, self.ylen, self.n_units))
-        # oxs = F.transpose(oxs, (1, 0, 2, 3))  # oxs: (bs, ylen, xlen, unit)
-        # oys = F.transpose(oys, (1, 2, 0, 3))  # oys: (bs, ylen, xlen, unit)
-        # scores = F.sum(oxs*oys, axis=3)  # scores: (bs, ylen, xlen)
-        # scores = F.softmax(scores, axis=2) # scores: (bs, ylen, xlen)
-        # return scores
 
     def general(self, oxs, oys):
         oys = F.stack(sequence_embed(self.wg, oys))
