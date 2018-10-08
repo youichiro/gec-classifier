@@ -3,19 +3,15 @@
 ex) 彼に車を預ける → 彼 に 車 <を> 預ける
 """
 import os
-import MeCab
-from tqdm import tqdm
 import random
+import argparse
+from tqdm import tqdm
+import MeCab
 
 
-data_path = 'datasets/mai2000.all.txt'
-save_train_path = 'datasets/train.txt'
-save_dev_path = 'datasets/dev.txt'
 mecab_dict_path = '/tools/env/lib/mecab/dic/unidic'
 TARGETS = ['が', 'を', 'に', 'で']
 TARGET_PART = '助詞-格助詞'
-valid_size = 1000
-max_len = 70
 
 
 class Mecab:
@@ -39,19 +35,27 @@ def get_target_positions(words, parts):
 
 
 def main():
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--corpus', required=True, help='Corpus file')
+    parser.add_argument('--save_train', required=True, help='Save file of train data')
+    parser.add_argument('--save_valid', required=True, help='Save file of validation data')
+    parser.add_argument('--valid_size', type=int, default=1000, help='Size of validation data')
+    parser.add_argument('--maxlen', type=int, default=70, help='Max num of words in a sentence')
+    args = parser.parse_args()
+
     mecab = Mecab(mecab_dict_path)
     count = 0
-    if os.path.exists(save_train_path):
-        os.remove(save_train_path)
-    if os.path.exists(save_dev_path):
-        os.remove(save_dev_path)
+    if os.path.exists(args.save_train):
+        os.remove(args.save_train)
+    if os.path.exists(args.save_valid):
+        os.remove(args.save_valid)
 
-    lines = open(data_path, 'r', encoding='utf-8').readlines()
+    lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     for line in tqdm(lines):
         words, parts = mecab.tagger(line.rstrip())
         target_idx = get_target_positions(words, parts)
         n_target = len(target_idx)
-        if not n_target or len(words) > max_len:
+        if not n_target or len(words) > args.maxlen:
             continue
         elif n_target == 1:
             target_id = target_idx[0]
@@ -60,7 +64,7 @@ def main():
         marked_sentence = '{} <{}> {}'.format(
             ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
 
-        save_path = save_dev_path if count < valid_size else save_train_path
+        save_path = args.save_valid if count < args.valid_size else args.save_train
         open(save_path, 'a').write(marked_sentence + '\n')
         count += 1
 
