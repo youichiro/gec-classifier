@@ -45,6 +45,9 @@ def split_text(lines):
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
         m = re.match(split_regex, line.rstrip())
+        if not m:
+            continue
+            #TODO: create_dataset.pyで文末の格助詞タグを付けないようにして再実行
         left_text, target, right_text = m.groups()
         left_words.append(clean_text(left_text).split())
         right_words.append(clean_text(right_text).split())

@@ -57,6 +57,8 @@ def main():
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
+    #TODO: len(train), len(w2id)の表示
+    #TODO: UNK rateの表示
 
     train_iter = chainer.iterators.SerialIterator(train, batch_size=args.batchsize)
     valid_iter = chainer.iterators.SerialIterator(valid, batch_size=args.batchsize,

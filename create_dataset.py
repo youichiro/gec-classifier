@@ -30,7 +30,8 @@ class Mecab:
 
 def get_target_positions(words, parts):
     target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
-                  if p == TARGET_PART and w in TARGETS]
+                  if p == TARGET_PART and w in TARGETS \
+                  and i != 0 and i != len(words) - 1]  # 文頭と文末の格助詞は除く
     return target_idx
 
 
