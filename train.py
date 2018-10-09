@@ -3,7 +3,7 @@ import json
 import numpy
 import argparse
 import nets
-from utils import make_dataset, IGNORE_ID
+from utils import make_dataset, IGNORE_ID, UNK_ID
 import chainer
 from chainer.dataset import convert
 from chainer.backends import cuda
@@ -31,6 +31,12 @@ def seq_convert(batch, device=None):
     return (lxs_block, rxs_block, ts_block)
 
 
+def unknown_rate(data):
+    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs in data)
+    total = sum(ls.size + rs.size for ls, rs in data)
+    return n_unk / total
+
+
 def main():
     # args
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -42,6 +48,8 @@ def main():
     parser.add_argument('--unit', type=int, default=300, help='Number of hidden layer units')
     parser.add_argument('--layer', type=int, default=1, help='Number of hidden layers')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
+    parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
+    parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
@@ -57,16 +65,19 @@ def main():
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
-    #TODO: len(train), len(w2id)の表示
-    #TODO: UNK rateの表示
+    print('Train size:', len(train))
+    print('Vocab size:', n_vocab)
+    print('Unknown rate: {:.2f}%'.format(unknown_rate(train) * 100))
 
     train_iter = chainer.iterators.SerialIterator(train, batch_size=args.batchsize)
     valid_iter = chainer.iterators.SerialIterator(valid, batch_size=args.batchsize,
                                                   repeat=False, shuffle=False)
 
     # model
-    # model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer)
-    model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer)
+    if args.attn == 'disuse':
+        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.rnn)
+    elif args.attn == 'global':
+        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.rnn)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)

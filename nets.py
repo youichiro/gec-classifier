@@ -15,18 +15,21 @@ def sequence_embed(embed, xs, dropout=0.1):
 
 
 class Encoder(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
-            self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
+            if rnn == 'LSTM':
+                self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
+            elif rnn == 'GRU':
+                self.rnn = L.NStepGRU(n_layers, n_units, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
         self.dropout = dropout
 
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
-        last_h, last_c, ys = self.rnn(None, None, exs)
+        last_h, _, _ = self.rnn(None, None, exs)
         assert (last_h.shape == (self.n_layers, len(xs), self.out_units))
         concat_outputs = last_h[-1]
         return concat_outputs
@@ -68,11 +71,11 @@ class Classifier(chainer.Chain):
 
 
 class ContextClassifier(chainer.Chain):
-    def __init__(self, left_encoder, right_encoder, n_units, n_class, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = left_encoder
-            self.right_encoder = right_encoder
+            self.left_encoder = Encoder(n_vocab, n_units, n_layer, dropout, rnn)
+            self.right_encoder = Encoder(n_vocab, n_units, n_layer, dropout, rnn)
             self.output = L.Linear(n_units + n_units, n_class)
         self.dropout = dropout
 
@@ -137,11 +140,11 @@ class GlobalAttention(chainer.Chain):
 
 
 class AttnContextClassifier(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout)
-            self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout)
+            self.left_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
+            self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)
