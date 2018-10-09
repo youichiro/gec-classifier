@@ -26,11 +26,14 @@ class Encoder(chainer.Chain):
         self.n_layers = n_layers
         self.out_units = n_units
         self.dropout = dropout
+        self.rnn_type = rnn
 
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
-        last_h, _, _ = self.rnn(None, None, exs)
-        assert (last_h.shape == (self.n_layers, len(xs), self.out_units))
+        if self.rnn_type == 'LSTM':
+            last_h, _, _ = self.rnn(None, None, exs)
+        elif self.rnn_type == 'GRU':
+            last_h, _ = self.rnn(None, exs)
         concat_outputs = last_h[-1]
         return concat_outputs
 
@@ -38,8 +41,11 @@ class Encoder(chainer.Chain):
 class AttnEncoder(Encoder):
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
-        hx, cx, oxs = self.rnn(None, None, exs)
-        return hx, cx, oxs
+        if self.rnn_type == 'LSTM':
+            _, _, oxs = self.rnn(None, None, exs)
+        elif self.rnn_type == 'GRU':
+            _, oxs = self.rnn(None, exs)
+        return oxs
 
 
 class Classifier(chainer.Chain):
@@ -163,8 +169,8 @@ class AttnContextClassifier(chainer.Chain):
 
     def predict(self, lxs, rxs, softmax=False, argmax=False):
         rxs = rxs[:, ::-1]
-        _, _, los = self.left_encoder(lxs)
-        _, _, ros = self.right_encoder(rxs)
+        los = self.left_encoder(lxs)
+        ros = self.right_encoder(rxs)
         los = F.stack(los)
         ros = F.stack(ros)
         lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)

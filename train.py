@@ -32,8 +32,8 @@ def seq_convert(batch, device=None):
 
 
 def unknown_rate(data):
-    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs in data)
-    total = sum(ls.size + rs.size for ls, rs in data)
+    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, ts in data)
+    total = sum(ls.size + rs.size for ls, rs, ts in data)
     return n_unk / total
 
 
@@ -75,9 +75,9 @@ def main():
 
     # model
     if args.attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.rnn)
+        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
     elif args.attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.rnn)
+        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
