@@ -49,11 +49,11 @@ def main():
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    train, w2id, classes = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
-    valid, _, _ = make_dataset(args.valid, w2id, classes)
+    train, w2id, class2id = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
+    valid, _, _ = make_dataset(args.valid, w2id, class2id)
     n_vocab = len(w2id)
-    n_class = len(classes)
-    vocab = {'classes': classes, 'w2id': w2id}
+    n_class = len(class2id)
+    vocab = {'class2id': class2id, 'w2id': w2id}
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))

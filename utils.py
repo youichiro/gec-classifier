@@ -1,6 +1,7 @@
 import re
 import mojimoji
 import numpy
+import random
 from tqdm import tqdm
 from collections import Counter
 
@@ -28,8 +29,8 @@ def get_vocab(words, vocab_size, min_freq):
 
 def get_class(targets):
     targets = set(targets)
-    classes = {t: i for i, t in enumerate(targets)}
-    return classes
+    class2id = {t: i for i, t in enumerate(targets)}
+    return class2id
 
 
 def make_context_array(words, w2id):
@@ -37,14 +38,14 @@ def make_context_array(words, w2id):
     return numpy.array(ids, numpy.int32)
 
 
-def make_target_array(target, classes):
-    return numpy.array([classes[target]], numpy.int32)
+def make_target_array(target, class2id):
+    return numpy.array([class2id[target]], numpy.int32)
 
 
 def split_text(lines):
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
-        m = re.match(split_regex, line.rstrip())
+        m = re.match(split_regex, line.replace('\n', ''))
         if not m:
             continue
             #TODO: create_dataset.pyで文末の格助詞タグを付けないようにして再実行
@@ -55,7 +56,7 @@ def split_text(lines):
     return left_words, right_words, targets
 
 
-def make_dataset(path, w2id=None, classes=None, vocab_size=40000, min_freq=1):
+def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1):
     """
     example return:
         dataset = [
@@ -65,21 +66,39 @@ def make_dataset(path, w2id=None, classes=None, vocab_size=40000, min_freq=1):
             ...
         ]
         w2id = {'UNK': 0, 'token1': 1, 'token2': 2, ...}
-        classes = {'class1': 0, 'class2': 1, 'class3': 2, ...}
+        class2id = {'class1': 0, 'class2': 1, 'class3': 2, ...}
     """
-    lines = open(path, 'r', encoding = 'utf-8').readlines()
+    if type(path_or_data) is list:
+        lines = path_or_data
+    else:
+        lines = open(path_or_data, 'r', encoding = 'utf-8').readlines()
     left_words, right_words, targets = split_text(lines)
 
-    if not w2id or not classes:
+    if not w2id or not class2id:
         words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
         w2id = get_vocab(words, vocab_size, min_freq)
-        classes = get_class(targets)
+        class2id = get_class(targets)
 
     left_arrays = [make_context_array(words, w2id) for words in left_words]
     right_arrays = [make_context_array(words, w2id) for words in right_words]
-    target_arrays = [make_target_array(t, classes) for t in targets]
+    target_arrays = [make_target_array(t, class2id) for t in targets]
 
     dataset = [(left_array, right_array, target_array)
                for left_array, right_array, target_array in zip(left_arrays, right_arrays, target_arrays)]
 
-    return dataset, w2id, classes
+    return dataset, w2id, class2id
+
+
+def tagging(err, ans):
+    """
+    err: 分かち書きされた誤り文
+    ans: 分かち書きされた正解文
+    条件: len(err) == len(ans) and err != ans
+    return: errとansの不一致箇所の1つをタグ(<>)付けした文とerror
+    """
+    diff_ids = [i for i in range(len(err)) if err[i] != ans[i]]
+    idx = diff_ids[0] if len(diff_ids) == 1 else random.choice(diff_ids)
+    test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
+    error = err[idx]
+    return test, error
+
