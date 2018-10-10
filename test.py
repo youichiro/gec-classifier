@@ -32,10 +32,12 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--batchsize', type=int, default=0, help='Batch size')
     parser.add_argument('--gpuid', type=int, default=-1, help='GPU ID')
+    parser.add_argument('--attn', required=True, choices=['disuse', 'global'], help='Type of attention mechanism')
+    parser.add_argument('--rnn', required=True, choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--model_dir', required=True, help='Directory of trained models')
     parser.add_argument('--err', required=True, help='Segmented error text file')
     parser.add_argument('--ans', required=True, help='Segmented answer text file')
-    parser.add_argument('--model', required=True, help='Trained model file')
+    parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
     args = parser.parse_args()
 
     # prepare
@@ -47,15 +49,18 @@ def main():
     id2class = {v: k for k, v in class2id.items()}
     n_vocab = len(w2id)
     n_class = len(class2id)
-
     opts = json.load(open(args.model_dir + '/opts.json'))
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
+    model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
-    model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout)
-    chainer.serializers.load_npz(args.model, model)
+    if args.attn == 'disuse':
+        model = nets.ContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
+    elif args.attn == 'global':
+        model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
+    chainer.serializers.load_npz(model_file, model)
     if args.gpuid >= 0:
         cuda.get_device(args.gpuid).use()
         model.to_gpu(args.gpuid)
