@@ -15,7 +15,7 @@ def main():
                 if len(err) == len(ans) and err != ans]
     with open(args.save, 'w') as f:
         for test in testdata:
-            f.write(test + '\n')
+            f.write(test)
 
 
 if __name__ == '__main__':
