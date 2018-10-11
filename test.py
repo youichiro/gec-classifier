@@ -44,8 +44,8 @@ def main():
     vocab = json.load(open(args.model_dir + '/vocab.json', 'r'))
     w2id = vocab['w2id']
     id2w = {v: k for k, v in w2id.items()}
-    class2id = vocab['classes']
-    # class2id = vocab['class2id']
+    # class2id = vocab['classes']
+    class2id = vocab['class2id']
     id2class = {v: k for k, v in class2id.items()}
     n_vocab = len(w2id)
     n_class = len(class2id)
