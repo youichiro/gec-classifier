@@ -99,6 +99,5 @@ def tagging(err, ans):
     diff_ids = [i for i in range(len(err)) if err[i] != ans[i]]
     idx = diff_ids[0] if len(diff_ids) == 1 else random.choice(diff_ids)
     test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
-    error = err[idx]
-    return test, error
+    return test
 

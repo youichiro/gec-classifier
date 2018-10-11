@@ -8,6 +8,7 @@ from chainer.backends import cuda
 
 
 class Eval:
+    """Precision, Recall, F-measureを計算する"""
     def __init__(self):
         self.tp, self.tn, self.fp, self.fn = 0, 0, 0, 0
 
@@ -70,10 +71,9 @@ def main():
     ans_data = open(args.ans).readlines()
     testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
                 if len(err) == len(ans) and err != ans]
-    test, _, _ = make_dataset([data[0] for data in testdata], w2id, class2id)
+    test, _, _ = make_dataset(testdata, w2id, class2id)
 
     count, t = 0, 0
-    evl = Eval()
     if args.batchsize == 0:
         for i in range(len(test)):
             lxs, rxs, ts = seq_convert([test[i]])
@@ -82,12 +82,10 @@ def main():
             right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[0]])
             target = id2class.get(int(ts[0]))
             predict = id2class.get(int(predict[0]))
-            error = testdata[i][1]
             result = True if predict == target else False
-            # print('{} [{} {} {}] {}\t{}'.format(left_text, error, predict, target, right_text, result))
             count += 1
             t += 1 if result else 0
-            evl.count(error, predict, target)
+            # print('{} [{} {} {}] {}\t{}'.format(left_text, error, predict, target, right_text, result))
     else:
         for i in range(0, len(test), args.batchsize):
             lxs, rxs, ts = seq_convert(test[i:i + args.batchsize], args.gpuid)
@@ -102,8 +100,6 @@ def main():
                 t += 1 if result else 0
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
-    print('Precision {:.2f}%, Recall {:.2f}%, F {:.2f}%\n(TP:{} FP:{} FN:{} TN:{})'.format(
-        evl.precision() * 100, evl.recall() * 100, evl.f() * 100, evl.tp, evl.fp, evl.fn, evl.tn))
 
 
 if __name__ == '__main__':
