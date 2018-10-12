@@ -97,7 +97,8 @@ def tagging(err, ans):
     return: errとansの不一致箇所の1つをタグ(<>)付けした文とerror
     """
     diff_ids = [i for i in range(len(err)) if err[i] != ans[i]]
-    idx = diff_ids[0] if len(diff_ids) == 1 else random.choice(diff_ids)
+    # idx = diff_ids[0] if len(diff_ids) == 1 else random.choice(diff_ids)
+    idx = diff_ids[0] if len(diff_ids) == 1 else diff_ids[1]
     test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
     return test
 
