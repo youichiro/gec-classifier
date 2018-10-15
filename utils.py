@@ -46,9 +46,6 @@ def split_text(lines):
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
         m = re.match(split_regex, line.replace('\n', ''))
-        if not m:
-            continue
-            #TODO: create_dataset.pyで文末の格助詞タグを付けないようにして再実行
         left_text, target, right_text = m.groups()
         left_words.append(clean_text(left_text).split())
         right_words.append(clean_text(right_text).split())
@@ -71,13 +68,18 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     if type(path_or_data) is list:
         lines = path_or_data
     else:
-        lines = open(path_or_data, 'r', encoding = 'utf-8').readlines()
+        lines = open(path_or_data, 'r', encoding='utf-8').readlines()
+    lines = [line for line in lines if re.match(split_regex, line)]
     left_words, right_words, targets = split_text(lines)
 
     if not w2id or not class2id:
         words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
         w2id = get_vocab(words, vocab_size, min_freq)
         class2id = get_class(targets)
+
+    converters = {}
+    converters['w2id'] = w2id
+    converters['class2id'] = class2id
 
     left_arrays = [make_context_array(words, w2id) for words in left_words]
     right_arrays = [make_context_array(words, w2id) for words in right_words]
@@ -86,7 +88,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     dataset = [(left_array, right_array, target_array)
                for left_array, right_array, target_array in zip(left_arrays, right_arrays, target_arrays)]
 
-    return dataset, w2id, class2id
+    return dataset, converters
 
 
 def tagging(err, ans):

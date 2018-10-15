@@ -14,6 +14,16 @@ def sequence_embed(embed, xs, dropout=0.1):
     return exs
 
 
+def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
+    ps = 'hoge'
+    x_len = [len(x) for x in xs]
+    x_section = numpy.cumsum(x_len[:-1])
+    ex = embed(F.concat(xs, axis=0))
+    ex = F.dropout(ex, ratio=dropout)
+    exs = F.split_axis(ex, x_section, 0)
+    return exs
+
+
 class Encoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
@@ -41,6 +51,17 @@ class Encoder(chainer.Chain):
 class AttnEncoder(Encoder):
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
+        if self.rnn_type == 'LSTM':
+            _, _, oxs = self.rnn(None, None, exs)
+        elif self.rnn_type == 'GRU':
+            _, oxs = self.rnn(None, exs)
+        return oxs
+
+
+class AttnEncoderWithPos(Encoder):
+    def __call__(self, xs, ps):
+        # concat xs and ps
+        exs = sequence_embed_with_pos(xs, ps)
         if self.rnn_type == 'LSTM':
             _, _, oxs = self.rnn(None, None, exs)
         elif self.rnn_type == 'GRU':
@@ -172,6 +193,55 @@ class AttnContextClassifier(chainer.Chain):
         #TODO: F.dropout()つける
         los = self.left_encoder(lxs)
         ros = self.right_encoder(rxs)
+        los = F.stack(los)
+        ros = F.stack(ros)
+        lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)
+        rstate = self.right_attn(ros, self.make_oys(ros))  # rstate: (bs, n_units)
+
+        state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*n_units)
+        relu_state = F.relu(F.stack(self.wc(state)))  # relu_state: (bs, n_units)
+        concat_outputs = F.stack(self.wo(relu_state))  # concat_outputs: (bs, n_class)
+        if softmax:
+            return F.softmax(concat_outputs).data
+        elif argmax:
+            return self.xp.argmax(concat_outputs.data, axis=1)
+        else:
+            return concat_outputs
+
+    def make_oys(self, oxs):
+        bs, xlen, _ = oxs.shape  # oxs: (bs, xlen, n_units)
+        oxs_last = oxs[::, -1]  # 最後の列の値の配列 oxs_last: (bs, u_units)
+        oys = F.broadcast_to(oxs_last, (xlen, bs, self.n_units))  # xlenだけ伸ばす oys: (xlen, bs, n_units)
+        oys = F.transpose(oys, (1, 0, 2))  # 転置 oys: (bs, xlen, n_units)
+        return oys
+
+
+class AttnContextClassifierWithPos(chainer.Chain):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM'):
+        super().__init__()
+        with self.init_scope():
+            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, n_layers, dropout, rnn)
+            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, n_layers, dropout, rnn)
+            self.left_attn = GlobalAttention(n_units, score='dot')
+            self.right_attn = GlobalAttention(n_units, score='dot')
+            self.wc = L.Linear(2*n_units, n_units)
+            self.wo = L.Linear(n_units, n_class)
+        self.n_units = n_units
+        self.dropout = dropout
+
+    def __call__(self, lxs, rxs, ts, lps, rps):
+        concat_outputs = self.predict(lxs, rxs, lps, rps)
+        concat_truths = F.concat(ts, axis=0)
+        loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
+        accuracy = F.accuracy(concat_outputs, concat_truths)
+        chainer.reporter.report({'loss': loss.data}, self)
+        chainer.reporter.report({'accuracy': accuracy.data}, self)
+        return loss
+
+    def predict(self, lxs, rxs, lps, rps, softmax=False, argmax=False):
+        rxs = rxs[:, ::-1]
+        los = self.left_encoder(lxs, lps)
+        ros = self.right_encoder(rxs, rps)
         los = F.stack(los)
         ros = F.stack(ros)
         lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)

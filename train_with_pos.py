@@ -10,6 +10,8 @@ from chainer.training import extensions
 
 import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
+from pos_dataset import make_dataset_with_pos
+
 
 class SaveModel(chainer.training.Extension):
     trigger = 1, 'epoch'
@@ -25,11 +27,13 @@ class SaveModel(chainer.training.Extension):
 
 
 def seq_convert(batch, device=None):
-    lxs, rxs, ts = zip(*batch)
+    lxs, rxs, ts, lps, rps  = zip(*batch)
     lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
-    return (lxs_block, rxs_block, ts_block)
+    lps_block = convert.concat_examples(lps, device)
+    rps_block = convert.concat_examples(rps, device)
+    return (lxs_block, rxs_block, ts_block, lps_block, rps_block)
 
 
 def unknown_rate(data):
@@ -49,7 +53,6 @@ def main():
     parser.add_argument('--unit', type=int, default=300, help='Number of hidden layer units')
     parser.add_argument('--layer', type=int, default=1, help='Number of hidden layers')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
-    parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
@@ -58,12 +61,13 @@ def main():
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
+    train, converters = make_dataset_with_pos(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
     w2id, class2id = converters['w2id'], converters['class2id']
-    valid, _ = make_dataset(args.valid, w2id, class2id)
+    pos2id, pos2onehotW = converters['pos2id'], converters['class2id']
+    valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
-    vocab = {'class2id': class2id, 'w2id': w2id}
+    vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW}
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
@@ -76,10 +80,7 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    if args.attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
-    elif args.attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
+    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
