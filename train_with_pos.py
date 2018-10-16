@@ -11,21 +11,9 @@ from chainer.training import extensions
 import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
 from pos_dataset import make_dataset_with_pos
+from train import SaveModel
 
 pos2onehotW = []
-
-
-class SaveModel(chainer.training.Extension):
-    trigger = 1, 'epoch'
-    priority = chainer.training.PRIORITY_WRITER
-
-    def __init__(self, model, save_dir):
-        self.model = model
-        self.save_dir = save_dir
-
-    def __call__(self, trainer):
-        model_name = 'model-e{}.npz'.format(trainer.updater.epoch)
-        chainer.serializers.save_npz(self.save_dir + '/' + model_name, self.model)
 
 
 def seq_convert(batch, device=None):
@@ -56,8 +44,8 @@ def seq_convert(batch, device=None):
 
 
 def unknown_rate(data):
-    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, ts in data)
-    total = sum(ls.size + rs.size for ls, rs, ts in data)
+    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, _, _, _ in data)
+    total = sum(ls.size + rs.size for ls, rs, _, _, _ in data)
     return n_unk / total
 
 
@@ -87,13 +75,13 @@ def main():
     valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
-    vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW}
+    vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW.tolist()}
     os.makedirs(args.save_dir, exist_ok=True)
-    # json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
-    # json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
+    json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
+    json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
     print('Train size:', len(train))
     print('Vocab size:', n_vocab)
-    # print('Unknown rate: {:.2f}%'.format(unknown_rate(train) * 100))
+    print('Unknown rate: {:.2f}%'.format(unknown_rate(train) * 100))
 
     train_iter = chainer.iterators.SerialIterator(train, batch_size=args.batchsize)
     valid_iter = chainer.iterators.SerialIterator(valid, batch_size=args.batchsize,
