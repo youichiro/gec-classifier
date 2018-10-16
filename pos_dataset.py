@@ -50,7 +50,7 @@ def split_text_with_pos(lines):
         left_pos_tags, right_pos_tags = pos_tags[:len(left_words)], pos_tags[len(left_words) + 1:]
 
         if len(left_words) != len(left_pos_tags) or len(right_words) != len(right_pos_tags):
-            print('assert')
+            # print('assert')
             # print()
             # print('line:', line)
             # print(m.groups())
