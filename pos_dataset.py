@@ -1,10 +1,11 @@
 import re
 import numpy
+from tqdm import tqdm
 from utils import (get_vocab, get_class, split_regex, clean_text,
                    make_context_array, make_target_array)
 from mecab import Mecab
 
-mecab_dict_file = ''
+mecab_dict_file = '/tools/env/lib/mecab/dic/unidic'
 mecab = Mecab(mecab_dict_file)
 
 
@@ -24,10 +25,14 @@ def get_onehotW(n_pos):
     return numpy.eye(n_pos)
 
 
+def clean_pos(pos):
+    return pos.split('-')[0]
+
+
 def split_text_with_pos(lines):
     left_words_data, right_words_data, targets_data = [], [], []
     left_pos_data, right_pos_data = [], []
-    for line in lines:
+    for line in tqdm(lines):
         m = re.match(split_regex, line.replace('\n', ''))
         left_text, target, right_text = m.groups()
         left_words = clean_text(left_text).split()
@@ -39,6 +44,7 @@ def split_text_with_pos(lines):
 
         # lineのスペースを排除して形態素解析
         pos_tags = to_pos(line)  # [pos1, pos2, ...]
+        pos_tags = [clean_pos(p) for p in pos_tags]
         left_pos_tags, right_pos_tags = pos_tags[:len(left_words)], pos_tags[len(left_words) + 1:]
         left_pos_data.append(left_pos_tags)
         right_pos_data.append(right_pos_tags)
@@ -66,6 +72,7 @@ def make_dataset_with_pos(path, w2id=None, class2id=None, pos2id=None, pos2oneho
     left_arrays = [make_context_array(words, w2id) for words in left_words]
     right_arrays = [make_context_array(words, w2id) for words in right_words]
     target_arrays = [make_target_array(t, class2id) for t in targets]
+
     left_pos_arrays = [[pos2onehotW[pos2id[p]] for p in pos_tags] for pos_tags in left_pos]
     right_pos_arrays = [[pos2onehotW[pos2id[p]] for p in pos_tags] for pos_tags in right_pos]
 
