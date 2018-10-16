@@ -72,8 +72,11 @@ def split_text_with_pos(lines):
     return left_words_data, right_words_data, targets_data, left_pos_data, right_pos_data
 
 
-def make_dataset_with_pos(path, w2id=None, class2id=None, pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
-    lines = open(path, 'r', encoding='utf-8').readlines()
+def make_dataset_with_pos(path_or_data, w2id=None, class2id=None, pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
+    if type(path_or_data) is list:
+        lines = path_or_data
+    else:
+        lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     lines = [line for line in lines if re.match(split_regex, line)]
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines)
 

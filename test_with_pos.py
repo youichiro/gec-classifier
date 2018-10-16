@@ -2,7 +2,8 @@ import json
 import argparse
 import numpy
 import nets
-from train_with_pos import seq_convert
+import train_with_pos
+from train_with_pos import seq_convert, pos2onehotW
 from utils import tagging
 from pos_dataset import make_dataset_with_pos
 import chainer
@@ -14,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--batchsize', type=int, default=0, help='Batch size')
     parser.add_argument('--gpuid', type=int, default=-1, help='GPU ID')
-    parser.add_argument('--rnn', required=True, choices=['LSTM', 'GRU'], help='Type of RNN')
+    parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--model_dir', required=True, help='Directory of trained models')
     parser.add_argument('--err', required=True, help='Segmented error text file')
     parser.add_argument('--ans', required=True, help='Segmented answer text file')
@@ -28,7 +29,7 @@ def main():
     class2id = vocab['class2id']
     id2class = {v: k for k, v in class2id.items()}
     pos2id = vocab['pos2id']
-    pos2onehotW = vocab['pos2onehotW']
+    train_with_pos.pos2onehotW = vocab['pos2onehotW']
     n_vocab = len(w2id)
     n_class = len(class2id)
     opts = json.load(open(args.model_dir + '/opts.json'))

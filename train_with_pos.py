@@ -75,13 +75,16 @@ def main():
     valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
+    unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW.tolist()}
+    args.__dict__['train_size'] = len(train)
+    args.__dict__['unknown_rate'] = unk_rate
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
     print('Train size:', len(train))
     print('Vocab size:', n_vocab)
-    print('Unknown rate: {:.2f}%'.format(unknown_rate(train) * 100))
+    print('Unknown rate: {:.2f}%'.format(unk_rate * 100))
 
     train_iter = chainer.iterators.SerialIterator(train, batch_size=args.batchsize)
     valid_iter = chainer.iterators.SerialIterator(valid, batch_size=args.batchsize,
