@@ -37,26 +37,44 @@ def split_text_with_pos(lines):
     left_words_data, right_words_data, targets_data = [], [], []
     left_pos_data, right_pos_data = [], []
     for line in tqdm(lines):
-        m = re.match(split_regex, line.replace('\n', ''))
+        line = line.replace('\n', '')
+        line = clean_text(line)
+        m = re.match(split_regex, line)
         left_text, target, right_text = m.groups()
         left_words = clean_text(left_text).split()
         right_words = clean_text(right_text).split()
-
-        left_words_data.append(left_words)
-        right_words_data.append(right_words)
-        targets_data.append(target)
 
         # lineのスペースを排除して形態素解析
         pos_tags = to_pos(line)  # [pos1, pos2, ...]
         pos_tags = [clean_pos(p) for p in pos_tags]
         left_pos_tags, right_pos_tags = pos_tags[:len(left_words)], pos_tags[len(left_words) + 1:]
+
+        if len(left_words) != len(left_pos_tags) or len(right_words) != len(right_pos_tags):
+            print('assert')
+            # print()
+            # print('line:', line)
+            # print(m.groups())
+            # print('len(left_words):', len(left_words))
+            # print('len(right_words):', len(right_words))
+            # print('len(pos_tags):', len(pos_tags))
+            # print('len(left_pos_tags):', len(left_pos_tags))
+            # print('len(right_pos_tags):', len(right_pos_tags))
+            continue
+
+        left_words_data.append(left_words)
+        right_words_data.append(right_words)
+        targets_data.append(target)
+
         left_pos_data.append(left_pos_tags)
         right_pos_data.append(right_pos_tags)
+
+
     return left_words_data, right_words_data, targets_data, left_pos_data, right_pos_data
 
 
 def make_dataset_with_pos(path, w2id=None, class2id=None, pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
     lines = open(path, 'r', encoding='utf-8').readlines()
+    lines = [line for line in lines if re.match(split_regex, line)]
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines)
 
     if not w2id and not class2id and not pos2id and not pos2onehotW:

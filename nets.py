@@ -15,10 +15,11 @@ def sequence_embed(embed, xs, dropout=0.1):
 
 
 def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
-    ps = 'hoge'
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
+    ps = F.concat(ps, axis=0)  # exに合わせてconcat
+    ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
     ex = F.dropout(ex, ratio=dropout)
     exs = F.split_axis(ex, x_section, 0)
     return exs
@@ -61,7 +62,7 @@ class AttnEncoder(Encoder):
 class AttnEncoderWithPos(Encoder):
     def __call__(self, xs, ps):
         # concat xs and ps
-        exs = sequence_embed_with_pos(xs, ps)
+        exs = sequence_embed_with_pos(self.embed, xs, ps, self.dropout)
         if self.rnn_type == 'LSTM':
             _, _, oxs = self.rnn(None, None, exs)
         elif self.rnn_type == 'GRU':

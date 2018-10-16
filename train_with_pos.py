@@ -40,15 +40,18 @@ def seq_convert(batch, device=None):
     lps_list = lps_block.tolist()
     rps_list = rps_block.tolist()
 
-    for pos_tag_ids in lps_list:
-        for pos in pos_tag_ids:
-            pos = pos2onehotW[pos] if pos >= 0 else numpy.zeros(len(pos2onehotW[0]))
-    for pos_tag_ids in rps_list:
-        for pos in pos_tag_ids:
-            pos = pos2onehotW[pos] if pos >= 0 else numpy.zeros(len(pos2onehotW[0]))
+    for i in range(len(lps_list)):
+        for j in range(len(lps_list[i])):
+            lps_list[i][j] = pos2onehotW[lps_list[i][j]] if lps_list[i][j] >= 0 else numpy.zeros(len(pos2onehotW[0]))
+    for i in range(len(rps_list)):
+        for j in range(len(rps_list[i])):
+            rps_list[i][j] = pos2onehotW[rps_list[i][j]] if rps_list[i][j] >= 0 else numpy.zeros(len(pos2onehotW[0]))
 
-    lps_block = numpy.array(lps_list, numpy.int32)
-    rps_block = numpy.array(rps_list, numpy.int32)
+    lps_block = numpy.array(lps_list, numpy.float32)
+    rps_block = numpy.array(rps_list, numpy.float32)
+
+    lps_block = convert.to_device(device, lps_block)
+    rps_block = convert.to_device(device, rps_block)
     return (lxs_block, rxs_block, ts_block, lps_block, rps_block)
 
 
@@ -79,8 +82,8 @@ def main():
     # prepare
     train, converters = make_dataset_with_pos(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
     w2id, class2id = converters['w2id'], converters['class2id']
-    pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
     global pos2onehotW
+    pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
     valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
