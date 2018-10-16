@@ -12,6 +12,8 @@ import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
 from pos_dataset import make_dataset_with_pos
 
+pos2onehotW = []
+
 
 class SaveModel(chainer.training.Extension):
     trigger = 1, 'epoch'
@@ -31,8 +33,22 @@ def seq_convert(batch, device=None):
     lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
-    lps_block = convert.concat_examples(lps, device)
-    rps_block = convert.concat_examples(rps, device)
+
+    lps_block = convert.concat_examples(lps, device, padding=IGNORE_ID)  # (bs, len(seq))
+    rps_block = convert.concat_examples(rps, device, padding=IGNORE_ID)  # (bs, len(seq))
+
+    lps_list = lps_block.tolist()
+    rps_list = rps_block.tolist()
+
+    for pos_tag_ids in lps_list:
+        for pos in pos_tag_ids:
+            pos = pos2onehotW[pos] if pos >= 0 else numpy.zeros(len(pos2onehotW[0]))
+    for pos_tag_ids in rps_list:
+        for pos in pos_tag_ids:
+            pos = pos2onehotW[pos] if pos >= 0 else numpy.zeros(len(pos2onehotW[0]))
+
+    lps_block = numpy.array(lps_list, numpy.int32)
+    rps_block = numpy.array(rps_list, numpy.int32)
     return (lxs_block, rxs_block, ts_block, lps_block, rps_block)
 
 
@@ -64,6 +80,7 @@ def main():
     train, converters = make_dataset_with_pos(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
     w2id, class2id = converters['w2id'], converters['class2id']
     pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
+    global pos2onehotW
     valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)

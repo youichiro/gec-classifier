@@ -29,6 +29,10 @@ def clean_pos(pos):
     return pos.split('-')[0]
 
 
+def make_pos_array(pos_tags, pos2id):
+    return numpy.array([pos2id[p] for p in pos_tags], numpy.int32)
+
+
 def split_text_with_pos(lines):
     left_words_data, right_words_data, targets_data = [], [], []
     left_pos_data, right_pos_data = [], []
@@ -73,8 +77,8 @@ def make_dataset_with_pos(path, w2id=None, class2id=None, pos2id=None, pos2oneho
     right_arrays = [make_context_array(words, w2id) for words in right_words]
     target_arrays = [make_target_array(t, class2id) for t in targets]
 
-    left_pos_arrays = [[pos2onehotW[pos2id[p]] for p in pos_tags] for pos_tags in left_pos]
-    right_pos_arrays = [[pos2onehotW[pos2id[p]] for p in pos_tags] for pos_tags in right_pos]
+    left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
+    right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
 
     dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
               for left_array, right_array, target_array, left_pos_array, right_pos_array
