@@ -7,6 +7,7 @@ import random
 import argparse
 from tqdm import tqdm
 import MeCab
+from utils import clean_text
 
 
 mecab_dict_path = '/tools/env/lib/mecab/dic/unidic'
@@ -53,7 +54,8 @@ def main():
 
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     for line in tqdm(lines):
-        words, parts = mecab.tagger(line.rstrip())
+        line = clean_text(line.rstrip())
+        words, parts = mecab.tagger(line)
         target_idx = get_target_positions(words, parts)
         n_target = len(target_idx)
         if not n_target or len(words) > args.maxlen:
