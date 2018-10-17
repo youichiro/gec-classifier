@@ -5,7 +5,7 @@ import nets
 import train_with_pos
 from train_with_pos import seq_convert, pos2onehotW
 from utils import tagging
-from pos_dataset import make_dataset_with_pos
+from utils_pos import make_dataset_with_pos
 import chainer
 from chainer.backends import cuda
 
@@ -36,6 +36,7 @@ def main():
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
+    pos_level = opts['pos_level']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
@@ -50,7 +51,7 @@ def main():
     ans_data = open(args.ans).readlines()
     testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
                 if len(err) == len(ans) and err != ans]
-    test, _ = make_dataset_with_pos(testdata, w2id, class2id, pos2id, pos2onehotW)
+    test, _ = make_dataset_with_pos(testdata, pos_level, w2id, class2id, pos2id, pos2onehotW)
 
     count, t = 0, 0
     if args.batchsize == 0:

@@ -25,15 +25,21 @@ def get_onehotW(n_pos):
     return numpy.eye(n_pos)
 
 
-def clean_pos(pos):
-    return pos.split('-')[0]
-
+def clean_pos(pos, pos_level):
+    if pos_level == 1:
+        return pos.split('-')[0]
+    elif pos_level == 2:
+        split = pos.split('-')
+        return split[0] + '-' + split[1] if len(split) > 1 else pos
+    elif pos_level == 3:
+        split = pos.split('-')
+        return split[0] + '-' + split[1] + '-' + split[2] if len(split) > 2 else pos
 
 def make_pos_array(pos_tags, pos2id):
     return numpy.array([pos2id[p] for p in pos_tags], numpy.int32)
 
 
-def split_text_with_pos(lines):
+def split_text_with_pos(lines, pos_level):
     left_words_data, right_words_data, targets_data = [], [], []
     left_pos_data, right_pos_data = [], []
     for line in tqdm(lines):
@@ -46,19 +52,11 @@ def split_text_with_pos(lines):
 
         # lineのスペースを排除して形態素解析
         pos_tags = to_pos(line)  # [pos1, pos2, ...]
-        pos_tags = [clean_pos(p) for p in pos_tags]
+        pos_tags = [clean_pos(p, pos_level) for p in pos_tags]
         left_pos_tags, right_pos_tags = pos_tags[:len(left_words)], pos_tags[len(left_words) + 1:]
 
         if len(left_words) != len(left_pos_tags) or len(right_words) != len(right_pos_tags):
             # print('assert')
-            # print()
-            # print('line:', line)
-            # print(m.groups())
-            # print('len(left_words):', len(left_words))
-            # print('len(right_words):', len(right_words))
-            # print('len(pos_tags):', len(pos_tags))
-            # print('len(left_pos_tags):', len(left_pos_tags))
-            # print('len(right_pos_tags):', len(right_pos_tags))
             continue
 
         left_words_data.append(left_words)
@@ -72,13 +70,14 @@ def split_text_with_pos(lines):
     return left_words_data, right_words_data, targets_data, left_pos_data, right_pos_data
 
 
-def make_dataset_with_pos(path_or_data, w2id=None, class2id=None, pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
+def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
+                          pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
     if type(path_or_data) is list:
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     lines = [line for line in lines if re.match(split_regex, line)]
-    left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines)
+    left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines, pos_level)
 
     if not w2id and not class2id and not pos2id and not pos2onehotW:
         words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
