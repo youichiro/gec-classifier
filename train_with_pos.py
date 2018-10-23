@@ -64,21 +64,23 @@ def main():
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
-    parser.add_argument('--pos_level', required=True, choices=[1, 2, 3], help=('Level of POS:'
-                                             '1 means major, 2 means medium and 3 means small'))
+    parser.add_argument('--pos_level', type=int, required=True, choices=[1, 2, 3], help=(
+                             'Level of POS: 1 means major, 2 means medium and 3 means small'))
     args = parser.parse_args()
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    train, converters = make_dataset_with_pos(args.train, args.pos_level, vocab_size=args.vocabsize, min_freq=args.minfreq)
+    train, converters = make_dataset_with_pos(args.train, args.pos_level,
+                                              vocab_size=args.vocabsize, min_freq=args.minfreq)
     w2id, class2id = converters['w2id'], converters['class2id']
     global pos2onehotW
     pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
-    valid, _ = make_dataset_with_pos(args.valid, w2id, class2id, pos2id, pos2onehotW)
+    valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW.tolist()}
+    args.__dict__['pos_level'] = args.pos_level
     args.__dict__['train_size'] = len(train)
     args.__dict__['unknown_rate'] = unk_rate
     os.makedirs(args.save_dir, exist_ok=True)

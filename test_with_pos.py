@@ -36,7 +36,8 @@ def main():
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
-    pos_level = opts['pos_level']
+    pos_level = 1
+    # pos_level = opts['pos_level']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
