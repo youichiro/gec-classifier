@@ -20,8 +20,8 @@ def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
     ex = embed(F.concat(xs, axis=0))
     ps = F.concat(ps, axis=0)  # exに合わせてconcat
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
-    ex = F.dropout(ex, ratio=dropout)
-    exs = F.split_axis(ex, x_section, 0)
+    ex = F.dropout(ex_ps, ratio=dropout)
+    exs = F.split_axis(ex_ps, x_section, 0)
     return exs
 
 

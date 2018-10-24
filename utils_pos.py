@@ -17,7 +17,8 @@ def to_pos(text):
 
 def get_pos(pos_tags):
     pos_tags = list(set(pos_tags))
-    pos2id = {p: i for i, p in enumerate(pos_tags)}
+    pos2id = {p: i for i, p in enumerate(pos_tags, 1)}
+    pos2id[0] = numpy.zeros(len(pos_tags))
     return pos2id
 
 
