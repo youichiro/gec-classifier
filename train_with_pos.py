@@ -25,15 +25,16 @@ def seq_convert(batch, device=None):
     lps_block = convert.concat_examples(lps, device, padding=IGNORE_ID)  # (bs, len(seq))
     rps_block = convert.concat_examples(rps, device, padding=IGNORE_ID)  # (bs, len(seq))
 
+    #TODO: ここでメモリエラー
     lps_list = lps_block.tolist()
     rps_list = rps_block.tolist()
 
     for i in range(len(lps_list)):
         for j in range(len(lps_list[i])):
-            lps_list[i][j] = pos2onehotW[lps_list[i][j]] if lps_list[i][j] >= 0 else numpy.zeros(len(pos2onehotW[0]))
+            lps_list[i][j] = pos2onehotW[lps_list[i][j]]
     for i in range(len(rps_list)):
         for j in range(len(rps_list[i])):
-            rps_list[i][j] = pos2onehotW[rps_list[i][j]] if rps_list[i][j] >= 0 else numpy.zeros(len(pos2onehotW[0]))
+            rps_list[i][j] = pos2onehotW[rps_list[i][j]]
 
     lps_block = numpy.array(lps_list, numpy.float32)
     rps_block = numpy.array(rps_list, numpy.float32)
