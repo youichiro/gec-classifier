@@ -32,6 +32,7 @@ def seq_convert(batch, device=None):
     lps_concat = numpy.concatenate(lps_block, axis=0)
     lps_onehot = pos2onehotW[lps_concat]
     lps_block = numpy.split(lps_onehot, lps_section, 0)
+    lps_block = numpy.array(lps_block)
     lps_block = convert.to_device(device, lps_block)
 
     rps_len = [len(rps) for rps in rps_block]
@@ -39,6 +40,7 @@ def seq_convert(batch, device=None):
     rps_concat = numpy.concatenate(rps_block, axis=0)
     rps_onehot = pos2onehotW[rps_concat]
     rps_block = numpy.split(rps_onehot, rps_section, 0)
+    rps_block = numpy.array(rps_block)
     rps_block = convert.to_device(device, rps_block)
 
     # #TODO: ここでメモリエラー
