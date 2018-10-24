@@ -23,25 +23,39 @@ def seq_convert(batch, device=None):
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
 
-    lps_block = convert.concat_examples(lps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
-    rps_block = convert.concat_examples(rps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
+    lps_block = convert.concat_examples(lps, padding=len(pos2onehotW)-1)  # (bs, len(seq))
+    rps_block = convert.concat_examples(rps, padding=len(pos2onehotW)-1)  # (bs, len(seq))
 
     # (バッチ×品詞ID系列)行列に品詞onehotを埋め込む
     lps_len = [len(lps) for lps in lps_block]
     lps_section = numpy.cumsum(lps_len[:-1])
-    lps_concat = numpy.concatenate(lps_block, axis=0)
-    lps_onehot = pos2onehotW[lps_concat]
-    lps_block = numpy.split(lps_onehot, lps_section, 0)
-    lps_block = numpy.array(lps_block)
+
+    lps_block = numpy.concatenate(lps_block, axis=0)
+    lps_block = pos2onehotW[lps_block]
+    lps_block = numpy.split(lps_block, lps_section, 0)
+    lps_block = numpy.array(lps_block, dtype=numpy.float32)
     lps_block = convert.to_device(device, lps_block)
+
+    # lps_concat = numpy.concatenate(lps_block, axis=0)
+    # lps_onehot = pos2onehotW[lps_concat]
+    # lps_block = numpy.split(lps_onehot, lps_section, 0)
+    # lps_block = numpy.array(lps_block, dtype=numpy.float32)
+    # lps_block = convert.to_device(device, lps_block)
 
     rps_len = [len(rps) for rps in rps_block]
     rps_section = numpy.cumsum(rps_len[:-1])
-    rps_concat = numpy.concatenate(rps_block, axis=0)
-    rps_onehot = pos2onehotW[rps_concat]
-    rps_block = numpy.split(rps_onehot, rps_section, 0)
-    rps_block = numpy.array(rps_block)
+
+    rps_block = numpy.concatenate(rps_block, axis=0)
+    rps_block = pos2onehotW[rps_block]
+    rps_block = numpy.split(rps_block, rps_section, 0)
+    rps_block = numpy.array(rps_block, dtype=numpy.float32)
     rps_block = convert.to_device(device, rps_block)
+
+    # rps_concat = numpy.concatenate(rps_block, axis=0)
+    # rps_onehot = pos2onehotW[rps_concat]
+    # rps_block = numpy.split(rps_onehot, rps_section, 0)
+    # rps_block = numpy.array(rps_block, dtype=numpy.float32)
+    # rps_block = convert.to_device(device, rps_block)
 
     # #TODO: ここでメモリエラー
     # lps_list = lps_block.tolist()
