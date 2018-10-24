@@ -14,16 +14,15 @@ def sequence_embed(embed, xs, dropout=0.1):
     return exs
 
 
-def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
-    from train_with_pos import pos2onehotW
+def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
-    print('pos2onehotW:', type(pos2onehotW))
+    print('pos2vec:', type(pos2vec))
     print('ps.array:', type(ps.array))
-    ps = F.embed_id(ps.array, pos2onehotW)
+    ps = F.embed_id(ps.array, pos2vec)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
     ex_ps = F.dropout(ex_ps, ratio=dropout)
@@ -65,10 +64,24 @@ class AttnEncoder(Encoder):
         return oxs
 
 
-class AttnEncoderWithPos(Encoder):
+class AttnEncoderWithPos(chainer.Chain):
+    def __init__(self, n_vocab, n_units, pos2vec, n_layers=1, dropout=0.1, rnn='LSTM'):
+        super().__init__()
+        with self.init_scope():
+            self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
+            if rnn == 'LSTM':
+                self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
+            elif rnn == 'GRU':
+                self.rnn = L.NStepGRU(n_layers, n_units, n_units, dropout)
+        self.n_layers = n_layers
+        self.out_units = n_units
+        self.dropout = dropout
+        self.rnn_type = rnn
+        self.pos2vec = pos2vec
+
     def __call__(self, xs, ps):
         # concat xs and ps
-        exs = sequence_embed_with_pos(self.embed, xs, ps, self.dropout)
+        exs = sequence_embed_with_pos(self.embed, xs, ps, self.pos2vec, self.dropout)
         if self.rnn_type == 'LSTM':
             _, _, oxs = self.rnn(None, None, exs)
         elif self.rnn_type == 'GRU':
@@ -224,11 +237,12 @@ class AttnContextClassifier(chainer.Chain):
 
 
 class AttnContextClassifierWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_class, pos2vec,
+                 n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, n_layers, dropout, rnn)
-            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, n_layers, dropout, rnn)
+            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, pos2vec, n_layers, dropout, rnn)
+            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, pos2vec, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)

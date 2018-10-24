@@ -78,6 +78,7 @@ def main():
     w2id, class2id = converters['w2id'], converters['class2id']
     global pos2onehotW
     pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
+    pos2onehotW = convert.to_device(args.gpuid, pos2onehotW)
     valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id, pos2onehotW)
     n_vocab = len(w2id)
     n_class = len(class2id)
@@ -98,11 +99,11 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
+    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, pos2onehotW,
+                                              args.layer, args.dropout, args.rnn)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
-        pos2onehotW = convert.to_device(args.gpuid, pos2onehotW)
 
     # trainer
     optimizer = chainer.optimizers.Adam()
