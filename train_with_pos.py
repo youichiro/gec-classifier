@@ -7,6 +7,7 @@ import chainer
 from chainer.dataset import convert
 from chainer.backends import cuda
 from chainer.training import extensions
+from chainer import functions as F
 
 import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
@@ -22,25 +23,38 @@ def seq_convert(batch, device=None):
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
 
-    lps_block = convert.concat_examples(lps, device, padding=IGNORE_ID)  # (bs, len(seq))
-    rps_block = convert.concat_examples(rps, device, padding=IGNORE_ID)  # (bs, len(seq))
+    lps_block = convert.concat_examples(lps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
+    rps_block = convert.concat_examples(rps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
 
-    #TODO: ここでメモリエラー
-    lps_list = lps_block.tolist()
-    rps_list = rps_block.tolist()
-
-    for i in range(len(lps_list)):
-        for j in range(len(lps_list[i])):
-            lps_list[i][j] = pos2onehotW[lps_list[i][j]]
-    for i in range(len(rps_list)):
-        for j in range(len(rps_list[i])):
-            rps_list[i][j] = pos2onehotW[rps_list[i][j]]
-
-    lps_block = numpy.array(lps_list, numpy.float32)
-    rps_block = numpy.array(rps_list, numpy.float32)
-
+    # (バッチ×品詞ID系列)行列に品詞onehotを埋め込む
+    lps_len = [len(lps) for lps in lps_block]
+    lps_section = numpy.cumsum(lps_len[:-1])
+    lps_concat = numpy.concatenate(lps_block, axis=0)
+    lps_onehot = pos2onehotW[lps_concat]
+    lps_block = numpy.split(lps_onehot, lps_section, 0)
     lps_block = convert.to_device(device, lps_block)
+
+    rps_len = [len(rps) for rps in rps_block]
+    rps_section = numpy.cumsum(rps_len[:-1])
+    rps_concat = numpy.concatenate(rps_block, axis=0)
+    rps_onehot = pos2onehotW[rps_concat]
+    rps_block = numpy.split(rps_onehot, rps_section, 0)
     rps_block = convert.to_device(device, rps_block)
+
+    # #TODO: ここでメモリエラー
+    # lps_list = lps_block.tolist()
+    # rps_list = rps_block.tolist()
+
+    # for i in range(len(lps_list)):
+    #     for j in range(len(lps_list[i])):
+    #         lps_list[i][j] = pos2onehotW[lps_list[i][j]]
+    # for i in range(len(rps_list)):
+    #     for j in range(len(rps_list[i])):
+    #         rps_list[i][j] = pos2onehotW[rps_list[i][j]]
+
+    # lps_block = numpy.array(lps_list, numpy.float32)
+    # rps_block = numpy.array(rps_list, numpy.float32)
+
     return (lxs_block, rxs_block, ts_block, lps_block, rps_block)
 
 
