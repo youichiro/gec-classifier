@@ -106,7 +106,7 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
     left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
     right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
 
-    dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
+    dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array, len(pos2onehotW) - 1)
               for left_array, right_array, target_array, left_pos_array, right_pos_array
               in zip(left_arrays, right_arrays, target_arrays, left_pos_arrays, right_pos_arrays)]
 

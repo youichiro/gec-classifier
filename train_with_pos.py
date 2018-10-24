@@ -14,17 +14,15 @@ from utils import make_dataset, IGNORE_ID, UNK_ID
 from utils_pos import make_dataset_with_pos
 from train import SaveModel
 
-pos2onehotW = []
-
 
 def seq_convert(batch, device=None):
-    lxs, rxs, ts, lps, rps  = zip(*batch)
+    lxs, rxs, ts, lps, rps, n_pos  = zip(*batch)
     lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
 
-    lps_block = convert.concat_examples(lps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
-    rps_block = convert.concat_examples(rps, device, padding=len(pos2onehotW)-1)  # (bs, len(seq))
+    lps_block = convert.concat_examples(lps, device, padding=n_pos)  # (bs, len(seq))
+    rps_block = convert.concat_examples(rps, device, padding=n_pos)  # (bs, len(seq))
 
     # (バッチ×品詞ID系列)行列に品詞onehotを埋め込む
     # lps_len = [len(lps) for lps in lps_block]
@@ -47,8 +45,8 @@ def seq_convert(batch, device=None):
 
 
 def unknown_rate(data):
-    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, _, _, _ in data)
-    total = sum(ls.size + rs.size for ls, rs, _, _, _ in data)
+    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, _, _, _, _ in data)
+    total = sum(ls.size + rs.size for ls, rs, _, _, _, _ in data)
     return n_unk / total
 
 
@@ -76,7 +74,6 @@ def main():
     train, converters = make_dataset_with_pos(args.train, args.pos_level,
                                               vocab_size=args.vocabsize, min_freq=args.minfreq)
     w2id, class2id = converters['w2id'], converters['class2id']
-    global pos2onehotW
     pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
     pos2onehotW = convert.to_device(args.gpuid, pos2onehotW)
     valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id, pos2onehotW)
