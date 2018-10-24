@@ -21,8 +21,8 @@ def seq_convert(batch, device=None):
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
     ts_block = convert.concat_examples(ts, device)
 
-    lps_block = convert.concat_examples(lps, device, padding=n_pos)  # (bs, len(seq))
-    rps_block = convert.concat_examples(rps, device, padding=n_pos)  # (bs, len(seq))
+    lps_block = convert.concat_examples(lps, device, padding=n_pos[0])  # (bs, len(seq))
+    rps_block = convert.concat_examples(rps, device, padding=n_pos[0])  # (bs, len(seq))
 
     # (バッチ×品詞ID系列)行列に品詞onehotを埋め込む
     # lps_len = [len(lps) for lps in lps_block]
