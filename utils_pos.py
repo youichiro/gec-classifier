@@ -25,8 +25,8 @@ def get_pos(pos_tags):
 
 def get_onehotW(pos2id):
     n_pos = len(pos2id)
-    onehotW = numpy.eye(n_pos - 1)
-    empty_pos = numpy.zeros(n_pos - 1)
+    onehotW = numpy.eye(n_pos - 1).astype(numpy.float32)
+    empty_pos = numpy.zeros(n_pos - 1).astype(numpy.float32)
     onehotW = numpy.vstack((onehotW, empty_pos))
     return onehotW
 

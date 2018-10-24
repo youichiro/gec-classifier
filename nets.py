@@ -21,7 +21,7 @@ def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
-    ps = pos2onehotW[ps]
+    ps = F.embed_id(ps.array, pos2onehotW)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
     ex_ps = F.dropout(ex_ps, ratio=dropout)
