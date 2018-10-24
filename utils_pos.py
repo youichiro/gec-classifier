@@ -17,13 +17,18 @@ def to_pos(text):
 
 def get_pos(pos_tags):
     pos_tags = list(set(pos_tags))
-    pos2id = {p: i for i, p in enumerate(pos_tags, 1)}
-    pos2id[0] = numpy.zeros(len(pos_tags))
+    n_pos = len(pos_tags)
+    pos2id = {p: i for i, p in enumerate(pos_tags)}
+    pos2id['その他'] = n_pos
     return pos2id
 
 
-def get_onehotW(n_pos):
-    return numpy.eye(n_pos)
+def get_onehotW(pos2id):
+    n_pos = len(pos2id)
+    onehotW = numpy.eye(n_pos - 1)
+    empty_pos = numpy.zeros(n_pos - 1)
+    onehotW = numpy.vstack((onehotW, empty_pos))
+    return onehotW
 
 
 def clean_pos(pos, pos_level):
@@ -37,7 +42,7 @@ def clean_pos(pos, pos_level):
         return split[0] + '-' + split[1] + '-' + split[2] if len(split) > 2 else pos
 
 def make_pos_array(pos_tags, pos2id):
-    return numpy.array([pos2id[p] for p in pos_tags], numpy.int32)
+    return numpy.array([pos2id.get(p, pos2id['その他']) for p in pos_tags], numpy.int32)
 
 
 def split_text_with_pos(lines, pos_level):
@@ -86,7 +91,7 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
         class2id = get_class(targets)
         pos_tags = [p for pos_tags in left_pos for p in pos_tags] + [p for pos_tags in right_pos for p in pos_tags]
         pos2id = get_pos(pos_tags)
-        pos2onehotW = get_onehotW(len(pos2id))
+        pos2onehotW = get_onehotW(pos2id)
 
     converters = {}
     converters['w2id'] = w2id
