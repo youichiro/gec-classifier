@@ -20,8 +20,6 @@ def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
-    print('pos2vec:', type(pos2vec))
-    print('ps.array:', type(ps.array))
     ps = F.embed_id(ps.array, pos2vec)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
