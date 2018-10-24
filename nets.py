@@ -3,7 +3,6 @@ import chainer
 import chainer.functions as F
 import chainer.links as L
 from utils import IGNORE_ID
-from train_with_pos import pos2onehotW
 
 
 def sequence_embed(embed, xs, dropout=0.1):
@@ -16,11 +15,14 @@ def sequence_embed(embed, xs, dropout=0.1):
 
 
 def sequence_embed_with_pos(embed, xs, ps, dropout=0.1):
+    from train_with_pos import pos2onehotW
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
+    print('pos2onehotW:', type(pos2onehotW))
+    print('ps.array:', type(ps.array))
     ps = F.embed_id(ps.array, pos2onehotW)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
