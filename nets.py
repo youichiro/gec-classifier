@@ -22,9 +22,25 @@ def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
     ps = F.concat(ps, axis=0)
     ps = F.embed_id(ps.array, pos2vec, ignore_label=len(pos2vec)-1)
 
+    print()
+    print('ex.shape:', ex.shape)
+    print('type(ex):', type(ex))
+    print('ex.dtype:', ex.dtype)
+    print()
+    print('ps.shape:', ps.shape)
+    print('type(ps):', type(ps))
+    print('ps.dtype:', ps.dtype)
+
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
+    print()
+    print('ex_ps.shape:', ex_ps.shape)
     ex_ps = F.dropout(ex_ps, ratio=dropout)
     exs = F.split_axis(ex_ps, x_section, 0)
+    print()
+    print('len(exs):', len(exs))
+    print('exs[0].shape:', exs[0].shape)
+    # ex = F.dropout(ex, ratio=dropout)
+    # exs = F.split_axis(ex, x_section, 0)
     return exs
 
 
