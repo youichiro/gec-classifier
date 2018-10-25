@@ -14,12 +14,13 @@ def sequence_embed(embed, xs, dropout=0.1):
     return exs
 
 
-def sequence_embed_with_pos(embed, xs, ps, embed_pos, dropout=0.1):
+def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
 
-    ps = embed_pos(F.concat(ps, axis=0))
+    ps = F.concat(ps, axis=0)
+    ps = F.embed_id(ps, pos2vec, ignore_label=len(pos2vec)-1)
 
     # print()
     # print('ex.shape:', ex.shape)
@@ -85,11 +86,11 @@ class AttnEncoderWithPos(chainer.Chain):
         n_pos = len(pos2vec) - 1
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
-            self.embed_pos = L.EmbedID(n_pos, n_pos, initialW=None, ignore_label=n_pos)
+            # self.embed_pos = L.EmbedID(n_pos, n_pos, initialW=None, ignore_label=n_pos)
             if rnn == 'LSTM':
-                self.rnn = L.NStepLSTM(n_layers, n_units, n_units, dropout)
+                self.rnn = L.NStepLSTM(n_layers, n_units+n_pos, n_units, dropout)
             elif rnn == 'GRU':
-                self.rnn = L.NStepGRU(n_layers, n_units, n_units, dropout)
+                self.rnn = L.NStepGRU(n_layers, n_units+n_pos, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
         self.dropout = dropout
@@ -98,7 +99,7 @@ class AttnEncoderWithPos(chainer.Chain):
 
     def __call__(self, xs, ps):
         # concat xs and ps
-        exs = sequence_embed_with_pos(self.embed, xs, ps, self.embed_pos, self.dropout)
+        exs = sequence_embed_with_pos(self.embed, xs, ps, self.pos2vec, self.dropout)
         if self.rnn_type == 'LSTM':
             _, _, oxs = self.rnn(None, None, exs)
         elif self.rnn_type == 'GRU':

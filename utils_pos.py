@@ -83,7 +83,7 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     lines = [line for line in lines if re.match(split_regex, line)]
-    lines = [line for line in lines if len(line.split()) < 20]
+    # lines = [line for line in lines if len(line.split()) < 20]
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines, pos_level)
 
     if not w2id and not class2id and not pos2id and not pos2onehotW:
