@@ -82,11 +82,11 @@ def main():
                                               args.layer, args.dropout, args.rnn)
     
     # Graph
-    lxs = numpy.array([1, 2, 3])
-    rxs = numpy.array([4, 5, 6])
-    ts = numpy.array([1])
-    lps = numpy.array([1, 2, 3])
-    rps = numpy.array([4, 5, 6])
+    lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
+    rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
+    ts = numpy.array([[1], [2]])
+    lps = numpy.array([[1, 2, 3], [7, 8, 9]])
+    rps = numpy.array([[4, 5, 6], [10, 11, 12]])
     loss = model(lxs, rxs, ts, lps, rps)
     g = c.build_computational_graph([loss])
     with open('graph.dot', 'w') as o:
