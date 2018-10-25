@@ -236,8 +236,7 @@ class AttnContextClassifier(chainer.Chain):
 
 
 class AttnContextClassifierWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, pos2vec,
-                 n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_class, pos2vec, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
             self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, pos2vec, n_layers, dropout, rnn)

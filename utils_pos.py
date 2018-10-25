@@ -45,10 +45,13 @@ def make_pos_array(pos_tags, pos2id):
 def split_text_with_pos(lines, pos_level):
     left_words_data, right_words_data, targets_data = [], [], []
     left_pos_data, right_pos_data = [], []
+
     for line in tqdm(lines):
         line = line.replace('\n', '')
         line = clean_text(line)
         m = re.match(split_regex, line)
+        if not m:
+            continue
         left_text, target, right_text = m.groups()
         left_words = clean_text(left_text).split()
         right_words = clean_text(right_text).split()
@@ -59,16 +62,13 @@ def split_text_with_pos(lines, pos_level):
         left_pos_tags, right_pos_tags = pos_tags[:len(left_words)], pos_tags[len(left_words) + 1:]
 
         if len(left_words) != len(left_pos_tags) or len(right_words) != len(right_pos_tags):
-            # print('assert')
             continue
 
         left_words_data.append(left_words)
         right_words_data.append(right_words)
         targets_data.append(target)
-
         left_pos_data.append(left_pos_tags)
         right_pos_data.append(right_pos_tags)
-
 
     return left_words_data, right_words_data, targets_data, left_pos_data, right_pos_data
 
@@ -79,7 +79,6 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
-    lines = [line for line in lines if re.match(split_regex, line)]
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines, pos_level)
 
     if not w2id and not class2id and not pos2id and not pos2onehotW:
@@ -90,21 +89,22 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
         pos2id = get_pos(pos_tags)
         pos2onehotW = get_onehotW(pos2id)
 
-    converters = {}
-    converters['w2id'] = w2id
-    converters['class2id'] = class2id
-    converters['pos2id'] = pos2id
-    converters['pos2onehotW'] = pos2onehotW
+    # left_arrays = [make_context_array(words, w2id) for words in left_words]
+    # right_arrays = [make_context_array(words, w2id) for words in right_words]
+    # target_arrays = [make_target_array(t, class2id) for t in targets]
+    # left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
+    # right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
 
-    left_arrays = [make_context_array(words, w2id) for words in left_words]
-    right_arrays = [make_context_array(words, w2id) for words in right_words]
-    target_arrays = [make_target_array(t, class2id) for t in targets]
+    # dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
+    #           for left_array, right_array, target_array, left_pos_array, right_pos_array
+    #           in zip(left_arrays, right_arrays, target_arrays, left_pos_arrays, right_pos_arrays)]
 
-    left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
-    right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
-
-    dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
-              for left_array, right_array, target_array, left_pos_array, right_pos_array
-              in zip(left_arrays, right_arrays, target_arrays, left_pos_arrays, right_pos_arrays)]
+    dataset = [
+        (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id),
+         make_pos_array(lps, pos2id), make_pos_array(rps, pos2id))
+        for lxs, rxs, t, lps, rps
+        in zip(left_words, right_words, targets, left_pos, right_pos)
+    ]
+    converters = {'w2id': w2id, 'class2id': class2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW}
 
     return dataset, converters
