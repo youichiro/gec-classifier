@@ -8,7 +8,6 @@ from chainer.dataset import convert
 from chainer.backends import cuda
 from chainer.training import extensions
 from chainer import functions as F
-import chainer.computational_graph as c
 
 import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
@@ -79,18 +78,6 @@ def main():
     # model
     model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, n_pos,
                                               args.layer, args.dropout, args.rnn)
-    
-    # Graph
-    # lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
-    # rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
-    # ts = numpy.array([[1], [2]])
-    # lps = numpy.array([[1, 2, 3], [7, 8, 9]])
-    # rps = numpy.array([[4, 5, 6], [10, 11, 12]])
-    # loss = model(lxs, rxs, ts, lps, rps)
-    # g = c.build_computational_graph([loss])
-    # with open(args.save_dir + '/graph.dot', 'w') as o:
-    #     o.write(g.dump())
-    # print('Has witten graph.dot')
     
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()

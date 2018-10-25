@@ -76,7 +76,7 @@ class AttnEncoderWithPos(chainer.Chain):
         self.out_units = n_units
         self.dropout = dropout
         self.rnn_type = rnn
-        self.posW = cuda.cupy.eye(n_pos).astype(cuda.cupy.float32)
+        self.posW = numpy.eye(n_pos).astype(numpy.float32)
 
     def __call__(self, xs, ps):
         # concat xs and ps

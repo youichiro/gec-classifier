@@ -4,6 +4,7 @@ import numpy
 import random
 from tqdm import tqdm
 from collections import Counter
+import chainer.computational_graph as c
 
 
 IGNORE_ID = -1
@@ -104,3 +105,15 @@ def tagging(err, ans):
     test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
     return test
 
+
+def graph(model):
+    lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
+    rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
+    ts = numpy.array([[1], [2]])
+    lps = numpy.array([[1, 2, 3], [7, 8, 9]])
+    rps = numpy.array([[4, 5, 6], [10, 11, 12]])
+    loss = model(lxs, rxs, ts, lps, rps)
+    g = c.build_computational_graph([loss])
+    with open('/graph.dot', 'w') as o:
+        o.write(g.dump())
+    print('Has witten graph.dot')
