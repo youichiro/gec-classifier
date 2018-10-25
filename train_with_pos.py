@@ -58,7 +58,8 @@ def main():
     valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id)
     n_vocab = len(w2id)
     n_class = len(class2id)
-    n_pos = len(pos2id)
+    posW = numpy.eye(len(pos2id))
+    posW = convert.to_device(args.gpuid, posW)
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id}
     args.__dict__['pos_level'] = args.pos_level
@@ -76,14 +77,12 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, n_pos,
+    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, posW,
                                               args.layer, args.dropout, args.rnn)
     
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
-        cuda.to_gpu(model.left_encoder.posW, args.gpuid)
-        cuda.to_gpu(model.right_encoder.posW, args.gpuid)
 
     # trainer
     optimizer = chainer.optimizers.Adam()

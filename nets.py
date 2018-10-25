@@ -64,8 +64,9 @@ class AttnEncoder(Encoder):
 
 
 class AttnEncoderWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_pos, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, posW, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
+        n_pos = len(posW)
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
             if rnn == 'LSTM':
@@ -76,7 +77,7 @@ class AttnEncoderWithPos(chainer.Chain):
         self.out_units = n_units
         self.dropout = dropout
         self.rnn_type = rnn
-        self.posW = numpy.eye(n_pos).astype(numpy.float32)
+        self.posW = posW
 
     def __call__(self, xs, ps):
         # concat xs and ps
@@ -236,11 +237,11 @@ class AttnContextClassifier(chainer.Chain):
 
 
 class AttnContextClassifierWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_pos, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_class, posW, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, n_pos, n_layers, dropout, rnn)
-            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, n_pos, n_layers, dropout, rnn)
+            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
+            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)
