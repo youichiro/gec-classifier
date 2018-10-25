@@ -19,15 +19,12 @@ def get_pos(pos_tags):
     pos_tags = list(set(pos_tags))
     n_pos = len(pos_tags)
     pos2id = {p: i for i, p in enumerate(pos_tags)}
-    pos2id['その他'] = n_pos
+    pos2id['UNK'] = n_pos
     return pos2id
 
 
 def get_onehotW(pos2id):
-    n_pos = len(pos2id)
-    onehotW = numpy.eye(n_pos - 1).astype(numpy.float32)
-    empty_pos = numpy.zeros(n_pos - 1).astype(numpy.float32)
-    onehotW = numpy.vstack((onehotW, empty_pos))
+    onehotW = numpy.eye(len(pos2id)).astype(numpy.float32)
     return onehotW
 
 
@@ -42,7 +39,7 @@ def clean_pos(pos, pos_level):
         return split[0] + '-' + split[1] + '-' + split[2] if len(split) > 2 else pos
 
 def make_pos_array(pos_tags, pos2id):
-    return numpy.array([pos2id.get(p, pos2id['その他']) for p in pos_tags], numpy.int32)
+    return numpy.array([pos2id.get(p, pos2id['UNK']) for p in pos_tags], numpy.int32)
 
 
 def split_text_with_pos(lines, pos_level):
@@ -83,7 +80,6 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     lines = [line for line in lines if re.match(split_regex, line)]
-    # lines = [line for line in lines if len(line.split()) < 20]
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines, pos_level)
 
     if not w2id and not class2id and not pos2id and not pos2onehotW:
@@ -107,7 +103,7 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
     left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
     right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
 
-    dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array, len(pos2onehotW) - 1)
+    dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
               for left_array, right_array, target_array, left_pos_array, right_pos_array
               in zip(left_arrays, right_arrays, target_arrays, left_pos_arrays, right_pos_arrays)]
 

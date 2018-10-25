@@ -20,29 +20,11 @@ def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
-    ps = F.embed_id(ps, pos2vec, ignore_label=len(pos2vec)-1)
-
-    # print()
-    # print('ex.shape:', ex.shape)
-    # print('type(ex):', type(ex))
-    # print('ex.dtype:', ex.dtype)
-    # print('ex[0]:', ex[0])
-    # print()
-    # print('ps.shape:', ps.shape)
-    # print('type(ps):', type(ps))
-    # print('ps.dtype:', ps.dtype)
-    # print('ps[0]:', ps[0])
+    ps = F.embed_id(ps, pos2vec, ignore_label=IGNORE_ID)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
-    # print()
-    # print('ex_ps.shape:', ex_ps.shape)
     ex_ps = F.dropout(ex_ps, ratio=dropout)
     exs = F.split_axis(ex_ps, x_section, 0)
-    # print()
-    # print('len(exs):', len(exs))
-    # print('exs[0].shape:', exs[0].shape)
-    # ex = F.dropout(ex, ratio=dropout)
-    # exs = F.split_axis(ex, x_section, 0)
     return exs
 
 
@@ -83,14 +65,13 @@ class AttnEncoder(Encoder):
 class AttnEncoderWithPos(chainer.Chain):
     def __init__(self, n_vocab, n_units, pos2vec, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
-        n_pos = len(pos2vec) - 1
+        n_pos = len(pos2vec)
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
-            # self.embed_pos = L.EmbedID(n_pos, n_pos, initialW=None, ignore_label=n_pos)
             if rnn == 'LSTM':
-                self.rnn = L.NStepLSTM(n_layers, n_units+n_pos, n_units, dropout)
+                self.rnn = L.NStepLSTM(n_layers, n_units + n_pos, n_units, dropout)  # ここ大事
             elif rnn == 'GRU':
-                self.rnn = L.NStepGRU(n_layers, n_units+n_pos, n_units, dropout)
+                self.rnn = L.NStepGRU(n_layers, n_units + n_pos, n_units, dropout)
         self.n_layers = n_layers
         self.out_units = n_units
         self.dropout = dropout
