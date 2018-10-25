@@ -89,8 +89,9 @@ def main():
     rps = numpy.array([[4, 5, 6], [10, 11, 12]])
     loss = model(lxs, rxs, ts, lps, rps)
     g = c.build_computational_graph([loss])
-    with open('graph.dot', 'w') as o:
+    with open(args.save_dir + '/graph.dot', 'w') as o:
         o.write(g.dump())
+    print('Has witten graph.dot')
     
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
