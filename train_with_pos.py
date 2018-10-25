@@ -95,6 +95,8 @@ def main():
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
+        model.left_encoder.posW.to_gpu(args.gpuid)
+        model.right_encoder.posW.to_gpu(args.gpuid)
 
     # trainer
     optimizer = chainer.optimizers.Adam()
