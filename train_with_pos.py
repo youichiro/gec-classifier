@@ -58,7 +58,7 @@ def main():
     valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id)
     n_vocab = len(w2id)
     n_class = len(class2id)
-    posW = numpy.eye(len(pos2id))
+    posW = numpy.eye(len(pos2id)).astype(numpy.float32)
     posW = convert.to_device(args.gpuid, posW)
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id}
