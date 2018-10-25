@@ -55,14 +55,13 @@ def main():
     # prepare
     train, converters = make_dataset_with_pos(args.train, args.pos_level,
                                               vocab_size=args.vocabsize, min_freq=args.minfreq)
-    w2id, class2id = converters['w2id'], converters['class2id']
-    pos2id, pos2onehotW = converters['pos2id'], converters['pos2onehotW']
-    pos2onehotW = convert.to_device(args.gpuid, pos2onehotW)
-    valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id, pos2onehotW)
+    w2id, class2id, pos2id = converters['w2id'], converters['class2id'], converters['pos2id']
+    valid, _ = make_dataset_with_pos(args.valid, args.pos_level, w2id, class2id, pos2id)
     n_vocab = len(w2id)
     n_class = len(class2id)
+    n_pos = len(pos2id)
     unk_rate = unknown_rate(train)
-    vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW.tolist()}
+    vocab = {'class2id': class2id, 'w2id': w2id, 'pos2id': pos2id}
     args.__dict__['pos_level'] = args.pos_level
     args.__dict__['train_size'] = len(train)
     args.__dict__['unknown_rate'] = unk_rate
@@ -78,7 +77,7 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, pos2onehotW,
+    model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, n_pos,
                                               args.layer, args.dropout, args.rnn)
     
     # Graph

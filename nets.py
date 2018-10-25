@@ -14,13 +14,13 @@ def sequence_embed(embed, xs, dropout=0.1):
     return exs
 
 
-def sequence_embed_with_pos(embed, xs, ps, pos2vec, dropout=0.1):
+def sequence_embed_with_pos(embed, xs, ps, posW, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
     ex = embed(F.concat(xs, axis=0))
 
     ps = F.concat(ps, axis=0)
-    ps = F.embed_id(ps, pos2vec, ignore_label=IGNORE_ID)
+    ps = F.embed_id(ps, posW, ignore_label=IGNORE_ID)
 
     ex_ps = F.concat((ex, ps), axis=1)  # word_embeddingにpos_onehotをconcat
     ex_ps = F.dropout(ex_ps, ratio=dropout)
@@ -63,9 +63,8 @@ class AttnEncoder(Encoder):
 
 
 class AttnEncoderWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, pos2vec, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_pos, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
-        n_pos = len(pos2vec)
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
             if rnn == 'LSTM':
@@ -76,11 +75,11 @@ class AttnEncoderWithPos(chainer.Chain):
         self.out_units = n_units
         self.dropout = dropout
         self.rnn_type = rnn
-        self.pos2vec = pos2vec
+        self.posW = numpy.eye(n_pos).astype(numpy.float32)
 
     def __call__(self, xs, ps):
         # concat xs and ps
-        exs = sequence_embed_with_pos(self.embed, xs, ps, self.pos2vec, self.dropout)
+        exs = sequence_embed_with_pos(self.embed, xs, ps, self.posW, self.dropout)
         if self.rnn_type == 'LSTM':
             _, _, oxs = self.rnn(None, None, exs)
         elif self.rnn_type == 'GRU':
@@ -236,11 +235,11 @@ class AttnContextClassifier(chainer.Chain):
 
 
 class AttnContextClassifierWithPos(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, pos2vec, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_class, n_pos, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, pos2vec, n_layers, dropout, rnn)
-            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, pos2vec, n_layers, dropout, rnn)
+            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, n_pos, n_layers, dropout, rnn)
+            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, n_pos, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)

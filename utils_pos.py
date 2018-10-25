@@ -23,11 +23,6 @@ def get_pos(pos_tags):
     return pos2id
 
 
-def get_onehotW(pos2id):
-    onehotW = numpy.eye(len(pos2id)).astype(numpy.float32)
-    return onehotW
-
-
 def clean_pos(pos, pos_level):
     if pos_level == 1:
         return pos.split('-')[0]
@@ -37,6 +32,7 @@ def clean_pos(pos, pos_level):
     elif pos_level == 3:
         split = pos.split('-')
         return split[0] + '-' + split[1] + '-' + split[2] if len(split) > 2 else pos
+
 
 def make_pos_array(pos_tags, pos2id):
     return numpy.array([pos2id.get(p, pos2id['UNK']) for p in pos_tags], numpy.int32)
@@ -73,21 +69,19 @@ def split_text_with_pos(lines, pos_level):
     return left_words_data, right_words_data, targets_data, left_pos_data, right_pos_data
 
 
-def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
-                          pos2id=None, pos2onehotW=None, vocab_size=40000, min_freq=1):
+def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None, pos2id=None, vocab_size=40000, min_freq=1):
     if type(path_or_data) is list:
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     left_words, right_words, targets, left_pos, right_pos = split_text_with_pos(lines, pos_level)
 
-    if not w2id and not class2id and not pos2id and not pos2onehotW:
+    if not w2id and not class2id and not pos2id:
         words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
         w2id = get_vocab(words, vocab_size, min_freq)
         class2id = get_class(targets)
         pos_tags = [p for pos_tags in left_pos for p in pos_tags] + [p for pos_tags in right_pos for p in pos_tags]
         pos2id = get_pos(pos_tags)
-        pos2onehotW = get_onehotW(pos2id)
 
     # left_arrays = [make_context_array(words, w2id) for words in left_words]
     # right_arrays = [make_context_array(words, w2id) for words in right_words]
@@ -105,6 +99,6 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None,
         for lxs, rxs, t, lps, rps
         in zip(left_words, right_words, targets, left_pos, right_pos)
     ]
-    converters = {'w2id': w2id, 'class2id': class2id, 'pos2id': pos2id, 'pos2onehotW': pos2onehotW}
+    converters = {'w2id': w2id, 'class2id': class2id, 'pos2id': pos2id}
 
     return dataset, converters
