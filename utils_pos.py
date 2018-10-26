@@ -24,14 +24,27 @@ def get_pos(pos_tags):
 
 
 def clean_pos(pos, pos_level):
-    if pos_level == 1:
+    if pos_level == 1:  # 大分類
         return pos.split('-')[0]
-    elif pos_level == 2:
+    elif pos_level == 2:  # 中分類
+        return '-'.join(pos.split('-')[:2])
+    elif pos_level == 3:  # 小分類
+        return '-'.join(pos.split('-')[:3])
+    elif pos_level == 4:  # マイ分類
         split = pos.split('-')
-        return split[0] + '-' + split[1] if len(split) > 1 else pos
-    elif pos_level == 3:
-        split = pos.split('-')
-        return split[0] + '-' + split[1] + '-' + split[2] if len(split) > 2 else pos
+        if split[0] == '感動詞':
+            return '感動詞'
+        elif split[0] == '形状詞':
+            return pos if split[1] == '助動詞語幹' else '形状詞-一般'
+        elif split[0] in ['記号', '補助記号', '空白']:
+            if len(split) > 1 and split[1] == '句点':
+                return '句点'
+            elif len(split) > 1 and split[1] == '読点':
+                return '読点'
+            else:
+                return '記号'
+        else:
+            return '-'.join(split[:3])
 
 
 def make_pos_array(pos_tags, pos2id):
@@ -82,16 +95,6 @@ def make_dataset_with_pos(path_or_data, pos_level, w2id=None, class2id=None, pos
         class2id = get_class(targets)
         pos_tags = [p for pos_tags in left_pos for p in pos_tags] + [p for pos_tags in right_pos for p in pos_tags]
         pos2id = get_pos(pos_tags)
-
-    # left_arrays = [make_context_array(words, w2id) for words in left_words]
-    # right_arrays = [make_context_array(words, w2id) for words in right_words]
-    # target_arrays = [make_target_array(t, class2id) for t in targets]
-    # left_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in left_pos]
-    # right_pos_arrays = [make_pos_array(pos_tags, pos2id) for pos_tags in right_pos]
-
-    # dataset = [(left_array, right_array, target_array, left_pos_array, right_pos_array)
-    #           for left_array, right_array, target_array, left_pos_array, right_pos_array
-    #           in zip(left_arrays, right_arrays, target_arrays, left_pos_arrays, right_pos_arrays)]
 
     dataset = [
         (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id),
