@@ -46,8 +46,8 @@ def main():
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
-    parser.add_argument('--pos_level', type=int, required=True, choices=[1, 2, 3], help=(
-                             'Level of POS: 1 means major, 2 means medium and 3 means small'))
+    parser.add_argument('--pos_level', type=int, required=True, choices=[1, 2, 3, 4], help=(
+                'Level of POS: 1 means major, 2 means medium and 3 means small, 4 means custom'))
     args = parser.parse_args()
     print(json.dumps(args.__dict__, indent=2))
 
