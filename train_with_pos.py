@@ -81,7 +81,7 @@ def main():
     # model
     model = nets.AttnContextClassifierWithPos(n_vocab, args.unit, n_class, posW,
                                               args.layer, args.dropout, args.rnn)
-    
+
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)

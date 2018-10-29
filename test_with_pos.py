@@ -3,7 +3,7 @@ import argparse
 import numpy
 import nets
 import train_with_pos
-from train_with_pos import seq_convert, pos2onehotW
+from train_with_pos import seq_convert
 from utils import tagging
 from utils_pos import make_dataset_with_pos
 import chainer
@@ -25,23 +25,26 @@ def main():
     # prepare
     vocab = json.load(open(args.model_dir + '/vocab.json', 'r'))
     w2id = vocab['w2id']
-    id2w = {v: k for k, v in w2id.items()}
     class2id = vocab['class2id']
-    id2class = {v: k for k, v in class2id.items()}
     pos2id = vocab['pos2id']
-    train_with_pos.pos2onehotW = vocab['pos2onehotW']
+
+    id2w = {v: k for k, v in w2id.items()}
+    id2class = {v: k for k, v in class2id.items()}
+
     n_vocab = len(w2id)
     n_class = len(class2id)
+    n_pos = len(pos2id)
+    posW = numpy.eye(n_pos).astype(numpy.float32)
+
     opts = json.load(open(args.model_dir + '/opts.json'))
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
-    pos_level = 1
-    # pos_level = opts['pos_level']
+    pos_level = opts['pos_level']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
-    model = nets.AttnContextClassifierWithPos(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
+    model = nets.AttnContextClassifierWithPos(n_vocab, n_units, n_class, posW, n_layer, dropout, args.rnn)
     chainer.serializers.load_npz(model_file, model)
     if args.gpuid >= 0:
         cuda.get_device(args.gpuid).use()
@@ -52,7 +55,7 @@ def main():
     ans_data = open(args.ans).readlines()
     testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
                 if len(err) == len(ans) and err != ans]
-    test, _ = make_dataset_with_pos(testdata, pos_level, w2id, class2id, pos2id, pos2onehotW)
+    test, _ = make_dataset_with_pos(testdata, pos_level, w2id, class2id, pos2id)
 
     count, t = 0, 0
     if args.batchsize == 0:

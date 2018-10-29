@@ -1,6 +1,6 @@
 __pycache__
 .DS_Store
 .python-version
-
+.vscode
 datasets/*
 !__init__.py
