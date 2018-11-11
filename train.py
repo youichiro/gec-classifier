@@ -11,6 +11,7 @@ from chainer.training import extensions
 import nets
 from utils import make_dataset, IGNORE_ID, UNK_ID
 
+
 class SaveModel(chainer.training.Extension):
     trigger = 1, 'epoch'
     priority = chainer.training.PRIORITY_WRITER
@@ -65,9 +66,9 @@ def main():
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id}
-    os.makedirs(args.save_dir, exist_ok=True)
     args.__dict__['train_size'] = len(train)
     args.__dict__['unknown_rate'] = unk_rate
+    os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'), ensure_ascii=False)
     json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
     print('Train size:', len(train))

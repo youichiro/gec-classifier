@@ -78,16 +78,12 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         w2id = get_vocab(words, vocab_size, min_freq)
         class2id = get_class(targets)
 
-    converters = {}
-    converters['w2id'] = w2id
-    converters['class2id'] = class2id
-
-    left_arrays = [make_context_array(words, w2id) for words in left_words]
-    right_arrays = [make_context_array(words, w2id) for words in right_words]
-    target_arrays = [make_target_array(t, class2id) for t in targets]
-
-    dataset = [(left_array, right_array, target_array)
-               for left_array, right_array, target_array in zip(left_arrays, right_arrays, target_arrays)]
+    dataset = [
+        (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id))
+        for lxs, rxs, t
+        in zip(left_words, right_words, targets)
+    ]
+    converters = {'w2id': w2id, 'class2id': class2id}
 
     return dataset, converters
 
@@ -100,13 +96,13 @@ def tagging(err, ans):
     return: errとansの不一致箇所の1つをタグ(<>)付けした文とerror
     """
     diff_ids = [i for i in range(len(err)) if err[i] != ans[i]]
-    # idx = diff_ids[0] if len(diff_ids) == 1 else random.choice(diff_ids)
     idx = diff_ids[0] if len(diff_ids) == 1 else diff_ids[1]
     test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
     return test
 
 
 def graph(model):
+    """モデルのネットワークグラフを描写する"""
     lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
     rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
     ts = numpy.array([[1], [2]])
