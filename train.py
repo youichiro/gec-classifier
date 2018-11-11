@@ -52,6 +52,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
+    parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'])
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
@@ -83,7 +84,7 @@ def main():
     if args.attn == 'disuse':
         model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
     elif args.attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn)
+        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.rnn, args.score)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
