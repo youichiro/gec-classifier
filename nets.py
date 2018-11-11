@@ -210,8 +210,9 @@ class AttnContextClassifier(chainer.Chain):
 
     def predict(self, lxs, rxs, softmax=False, argmax=False):
         rxs = rxs[:, ::-1]
-        los = F.dropout(self.left_encoder(lxs), ratio=self.dropout)
-        ros = F.dropout(self.right_encoder(rxs), ratio=self.dropout)
+        # TODO: dropoutつける
+        los = self.left_encoder(lxs)
+        ros = self.right_encoder(rxs)
         los = F.stack(los)
         ros = F.stack(ros)
         lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)
