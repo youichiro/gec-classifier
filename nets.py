@@ -187,13 +187,13 @@ class GlobalAttention(chainer.Chain):
 
 
 class AttnContextClassifier(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM'):
+    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM', score='dot'):
         super().__init__()
         with self.init_scope():
             self.left_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
             self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
-            self.left_attn = GlobalAttention(n_units, score='dot')
-            self.right_attn = GlobalAttention(n_units, score='dot')
+            self.left_attn = GlobalAttention(n_units, score)
+            self.right_attn = GlobalAttention(n_units, score)
             self.wc = L.Linear(2*n_units, n_units)
             self.wo = L.Linear(n_units, n_class)
         self.n_units = n_units
@@ -210,9 +210,8 @@ class AttnContextClassifier(chainer.Chain):
 
     def predict(self, lxs, rxs, softmax=False, argmax=False):
         rxs = rxs[:, ::-1]
-        #TODO: F.dropout()つける
-        los = self.left_encoder(lxs)
-        ros = self.right_encoder(rxs)
+        los = F.dropout(self.left_encoder(lxs), ratio=self.dropout)
+        ros = F.dropout(self.right_encoder(rxs), ratio=self.dropout)
         los = F.stack(los)
         ros = F.stack(ros)
         lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)
