@@ -10,8 +10,6 @@ from chainer.backends import cuda
 def main():
     # args
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    # parser.add_argument('--batchsize',   t ype=int, default=0, help='Batch size')
-    # parser.add_argument('--gpuid', type=int, default=-1, help='GPU ID')
     parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--model_dir', required=True, help='Directory of trained models')
@@ -21,7 +19,7 @@ def main():
     args = parser.parse_args()
 
     # prepare
-    vocab = json.loads(open(args.model_dir + '/vocab.json', 'r').read(), "utf-8")
+    vocab = json.load(open(args.model_dir + '/vocab.json', 'r'))
     w2id = vocab['w2id']
     id2w = {v: k for k, v in w2id.items()}
     class2id = vocab['classes']
@@ -41,9 +39,6 @@ def main():
     elif args.attn == 'global':
         model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
     chainer.serializers.load_npz(model_file, model)
-    # if args.gpuid >= 0:
-    #     cuda.get_device(args.gpuid).use()
-    #     model.to_gpu(args.gpuid)
 
     # test
     err_data = open(args.err).readlines()
