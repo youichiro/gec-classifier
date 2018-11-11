@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
 
     # prepare
-    vocab = json.load(open(args.model_dir + '/vocab.json', 'r'))
+    vocab = json.loads(open(args.model_dir + '/vocab.json', 'r').read(), "utf-8")
     w2id = vocab['w2id']
     id2w = {v: k for k, v in w2id.items()}
     class2id = vocab['classes']
