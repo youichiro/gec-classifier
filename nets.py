@@ -123,7 +123,7 @@ class CNNEncoder(chainer.Chain):
         self.dropout = dropout
 
     def __call__(self, xs):
-        x_block = chainer.dataset.convert.concat_examples(xs, padding=-1)
+        x_block = chainer.dataset.convert.concat_examples(xs, padding=IGNORE_ID)
         ex_block = block_embed(self.embed, x_block, self.dropout)
         h_w3 = F.max(self.cnn_w3(ex_block), axis=2)
         h_w4 = F.max(self.cnn_w4(ex_block), axis=2)
@@ -143,7 +143,7 @@ class MLP(chainer.ChainList):
         self.dropout = dropout
         self.out_units = n_units
 
-    def forward(self, x):
+    def __call__(self, x):
         for _, link in enumerate(self.children()):
             x = F.dropout(x, ratio=self.dropout)
             x = F.relu(link(x))
