@@ -23,6 +23,14 @@ def sequence_linear(W, xs):
     return exs
 
 
+def block_embed(embed, x, dropout=0.):
+    e = embed(x)
+    e = F.dropout(e, ratio=dropout)
+    e = F.transpose(e, (0, 2, 1))
+    e = e[:, :, :, None]
+    return e
+
+
 def sequence_embed_with_pos(embed, xs, ps, posW, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
@@ -97,6 +105,51 @@ class AttnEncoderWithPos(chainer.Chain):
         return oxs
 
 
+class CNNEncoder(chainer.Chain):
+    def __init__(self, n_vocab, n_units, n_layers, dropout=0.1):
+        out_units = n_units // 3
+        super(CNNEncoder, self).__init__()
+        with self.init_scope():
+            self.embed = L.EmbedID(n_vocab, n_units, initialW=None, ignore_label=IGNORE_ID)
+            self.cnn_w3 = L.Convolution2D(n_units, out_units, ksize=(3, 1), stride=1,
+                                          pad=(2, 0), nobias=True)
+            self.cnn_w4 = L.Convolution2D(n_units, out_units, ksize=(4, 1), stride=1,
+                                          pad=(3, 0), nobias=True)
+            self.cnn_w5 = L.Convolution2D(n_units, out_units, ksize=(5, 1), stride=1,
+                                          pad=(4, 0), nobias=True)
+            self.mlp = MLP(n_layers, out_units * 3, dropout)
+
+        self.out_units = out_units * 3
+        self.dropout = dropout
+
+    def forward(self, xs):
+        x_block = chainer.dataset.convert.concat_examples(xs, padding=-1)
+        ex_block = block_embed(self.embed, x_block, self.dropout)
+        h_w3 = F.max(self.cnn_w3(ex_block), axis=2)
+        h_w4 = F.max(self.cnn_w4(ex_block), axis=2)
+        h_w5 = F.max(self.cnn_w5(ex_block), axis=2)
+        h = F.concat([h_w3, h_w4, h_w5], axis=1)
+        h = F.relu(h)
+        h = F.dropout(h, ratio=self.dropout)
+        h = self.mlp(h)
+        return h
+
+
+class MLP(chainer.ChainList):
+    def __init__(self, n_layers, n_units, dropout=0.1):
+        super(MLP, self).__init__()
+        for _ in range(n_layers):
+            self.add_link(L.Linear(None, n_units))
+        self.dropout = dropout
+        self.out_units = n_units
+
+    def forward(self, x):
+        for _, link in enumerate(self.children()):
+            x = F.dropout(x, ratio=self.dropout)
+            x = F.relu(link(x))
+        return x
+
+
 class Classifier(chainer.Chain):
     def __init__(self, encoder, n_class, dropout=0.1):
         super().__init__()
@@ -147,6 +200,43 @@ class ContextClassifier(chainer.Chain):
         rxs = rxs[:, ::-1]
         left_encodings = F.dropout(self.left_encoder(lxs), ratio=self.dropout)
         right_encodings = F.dropout(self.right_encoder(rxs), ratio=self.dropout)
+        concat_encodings = F.concat((left_encodings, right_encodings))
+        concat_outputs = self.output(concat_encodings)
+        if softmax:
+            return F.softmax(concat_outputs).data
+        elif argmax:
+            return self.xp.argmax(concat_outputs.data, axis=1)
+        else:
+            return concat_outputs
+
+
+class ContextClassifier2(chainer.Chain):
+    def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, encoder='CNN'):
+        super().__init__()
+        with self.init_scope():
+            if encoder == 'CNN':
+                self.left_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
+                self.right_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
+            else:
+                self.left_encoder = Encoder(n_vocab, n_units, n_layer, dropout, encoder)
+                self.right_encoder = Encoder(n_vocab, n_units, n_layer, dropout, encoder)
+            self.output = L.Linear(n_units + n_units, n_class)
+        self.dropout = dropout
+
+    def __call__(self, lxs, rxs, ts):
+        concat_outputs = self.predict(lxs, rxs)
+        concat_truths = F.concat(ts, axis=0)
+        loss = F.softmax_cross_entropy(concat_outputs, concat_truths)
+        accuracy = F.accuracy(concat_outputs, concat_truths)
+        chainer.reporter.report({'loss': loss.data}, self)
+        chainer.reporter.report({'accuracy': accuracy.data}, self)
+        return loss
+
+    def predict(self, lxs, rxs, softmax=False, argmax=False):
+        rxs = rxs[:, ::-1]
+        left_encodings = F.dropout(self.left_encoder(lxs), ratio=self.dropout)
+        right_encodings = F.dropout(
+            self.right_encoder(rxs), ratio=self.dropout)
         concat_encodings = F.concat((left_encodings, right_encodings))
         concat_outputs = self.output(concat_encodings)
         if softmax:
