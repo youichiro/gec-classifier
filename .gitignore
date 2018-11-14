@@ -2,6 +2,7 @@ __pycache__
 .DS_Store
 .python-version
 .vscode
-datasets/*
-models/*
+datasets
+models
+*.html
 !__init__.py

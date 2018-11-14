@@ -161,18 +161,21 @@ class GlobalAttention(chainer.Chain):
             elif score == 'concat':
                 self.wa = L.Linear(2*n_units, 1)
 
+        self.scores = None
+
     def __call__(self, oxs, oys):
-        self.bs, self.xlen, _ = oxs.shape
-        _, self.ylen, _ = oys.shape
+        self.bs, self.xlen, _ = oxs.shape  # oxs: (bs, xlen, n_units)
+        _, self.ylen, _ = oys.shape  # oys: (bs, xlen, n_units)
 
         if self.score == 'dot':
             scores = self.dot(oys, oxs)
         elif self.score == 'general':
             scores = self.general(oys, oxs)
 
+        self.scores = scores
         scores = F.broadcast_to(scores, (self.n_units, self.bs, self.xlen))
-        scores = F.transpose(scores, (1, 2, 0))  # scores: (bs, xlen, unit)
-        ct = F.sum(oxs * scores, axis=1)  # ct: (bs, unit)
+        scores = F.transpose(scores, (1, 2, 0))  # scores: (bs, xlen, n_units)
+        ct = F.sum(oxs * scores, axis=1)  # ct: (bs, n_units)
         return ct
 
     def dot(self, oxs, oys):
@@ -210,7 +213,7 @@ class AttnContextClassifier(chainer.Chain):
 
     def predict(self, lxs, rxs, softmax=False, argmax=False):
         rxs = rxs[:, ::-1]
-        # TODO: dropoutつける
+        #TODO: dropoutつける
         los = self.left_encoder(lxs)
         ros = self.right_encoder(rxs)
         los = F.stack(los)

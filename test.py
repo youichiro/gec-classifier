@@ -6,46 +6,7 @@ from utils import make_dataset, tagging
 import chainer
 
 
-def main():
-    # args
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--model_dir', required=True, help='Directory of trained models')
-    parser.add_argument('--err', required=True, help='Segmented error text file')
-    parser.add_argument('--ans', required=True, help='Segmented answer text file')
-    parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
-    args = parser.parse_args()
-
-    # prepare
-    vocab = json.load(open(args.model_dir + '/vocab.json'))
-    w2id = vocab['w2id']
-    class2id = vocab['classes']
-    # class2id = vocab['class2id']
-    id2w = {v: k for k, v in w2id.items()}
-    id2class = {v: k for k, v in class2id.items()}
-    n_vocab = len(w2id)
-    n_class = len(class2id)
-    opts = json.load(open(args.model_dir + '/opts.json'))
-    attn = opts['attn']
-    rnn = opts['rnn']
-    n_units = opts['unit']
-    n_layer = opts['layer']
-    dropout = opts['dropout']
-    model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
-
-    # model
-    if attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, rnn)
-    elif attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, rnn)
-    chainer.serializers.load_npz(model_file, model)
-
-    # test
-    err_data = open(args.err).readlines()
-    ans_data = open(args.ans).readlines()
-    testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
-                if len(err) == len(ans) and err != ans]
-    test, _ = make_dataset(testdata, w2id, class2id)
-
+def test(model, test, id2w, id2class):
     count, t = 0, 0
     for i in range(len(test)):
         lxs, rxs, ts = seq_convert([test[i]])
@@ -63,6 +24,44 @@ def main():
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
 
-if __name__ == '__main__':
-    main()
+def load_model():
+    # args
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--model_dir', required=True, help='Directory of trained models')
+    parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
+    parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
+    parser.add_argument('--err', required=True, help='Segmented error text file')
+    parser.add_argument('--ans', required=True, help='Segmented answer text file')
+    args = parser.parse_args()
 
+    # prepare
+    vocab = json.load(open(args.model_dir + '/vocab.json'))
+    w2id = vocab['w2id']
+    class2id = vocab['classes']
+    # class2id = vocab['class2id']
+    id2w = {v: k for k, v in w2id.items()}
+    id2class = {v: k for k, v in class2id.items()}
+    n_vocab = len(w2id)
+    n_class = len(class2id)
+    opts = json.load(open(args.model_dir + '/opts.json'))
+    n_units = opts['unit']
+    n_layer = opts['layer']
+    dropout = opts['dropout']
+    model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
+
+    # model
+    model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
+    chainer.serializers.load_npz(model_file, model)
+
+    # test
+    err_data = open(args.err).readlines()
+    ans_data = open(args.ans).readlines()
+    testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
+                if len(err) == len(ans) and err != ans]
+    test, _ = make_dataset(testdata, w2id, class2id)
+
+    return model, test, id2w, id2class
+
+
+if __name__ == '__main__':
+    test(*load_model())
