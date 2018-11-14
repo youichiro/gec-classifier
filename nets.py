@@ -15,6 +15,14 @@ def sequence_embed(embed, xs, dropout=0.1):
     return exs
 
 
+def sequence_linear(W, xs):
+    x_len = [len(x) for x in xs]
+    x_section = numpy.cumsum(x_len[:-1])
+    ex = W(F.concat(xs, axis=0))
+    exs = F.split_axis(ex, x_section, 0)
+    return exs
+
+
 def sequence_embed_with_pos(embed, xs, ps, posW, dropout=0.1):
     x_len = [len(x) for x in xs]
     x_section = numpy.cumsum(x_len[:-1])
@@ -184,7 +192,7 @@ class GlobalAttention(chainer.Chain):
         return scores
 
     def general(self, oxs, oys):
-        oys = F.stack(sequence_embed(self.wg, oys))
+        oys = F.stack(sequence_linear(self.wg, oys))
         scores = self.dot(oxs, oys)
         return scores
 
@@ -197,7 +205,7 @@ class AttnContextClassifier(chainer.Chain):
             self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score)
             self.right_attn = GlobalAttention(n_units, score)
-            self.wc = L.Linear(2*n_units, n_units)
+            self.wc = L.Linear(4*n_units, n_units)
             self.wo = L.Linear(n_units, n_class)
         self.n_units = n_units
         self.dropout = dropout
@@ -214,37 +222,27 @@ class AttnContextClassifier(chainer.Chain):
     def predict(self, lxs, rxs, softmax=False, argmax=False):
         rxs = rxs[:, ::-1]
         #TODO: dropoutつける
-        los = self.left_encoder(lxs)
+        los = self.left_encoder(lxs)  # los: [(xlen, n_units)] * bs
         ros = self.right_encoder(rxs)
-        los = F.stack(los)
-        ros = F.stack(ros)
-        lstate = self.left_attn(los, self.make_oys(los))  # lstate: (bs, n_units)
-        rstate = self.right_attn(ros, self.make_oys(ros))  # rstate: (bs, n_units)
+        los = F.stack(los)  # los: (bs, xlen, n_units)
+        ros = F.stack(ros)  # ros: (bs, xlen, n_units)
+        lct = self.left_attn(los, self.make_oys(los))  # lct: (bs, n_units)
+        rct = self.right_attn(ros, self.make_oys(ros))  # rct: (bs, n_units)
 
-        state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*n_units)
-        relu_state = F.relu(F.stack(self.wc(state)))  # relu_state: (bs, n_units)
-        concat_outputs = F.stack(self.wo(relu_state))  # concat_outputs: (bs, n_class)
+        os = F.concat((los[::, -1], ros[::, -1]), axis=1)  # os: (bs, 2*n_units)
+        ct = F.concat((lct, rct), axis=1)  # ct: (bs, 2*n_units)
+        state = F.concat((os, ct), axis=1)  # state: (bs, 4*n_units)
+
+        # relu_state = F.relu(F.stack(self.wc(state)))
+        relu_state = F.relu(F.stack(sequence_linear(self.wc, state)))  # relu_state: (bs, n_units)
+        # concat_outputs = F.stack(self.wo(relu_state))
+        concat_outputs = F.stack(sequence_linear(self.wo, relu_state))  # concat_outputs: (bs, n_class)
         if softmax:
             return F.softmax(concat_outputs).data
         elif argmax:
             return self.xp.argmax(concat_outputs.data, axis=1)
         else:
             return concat_outputs
-
-    def classify(self, lxs, rxs):
-        rxs = rxs[:, ::-1]
-        los = self.left_encoder(lxs)
-        ros = self.right_encoder(rxs)
-        los = F.stack(los)  # los: (bs, xlen, n_units)
-        ros = F.stack(ros)  # ros: (bs, xlen, n_units)
-
-        lstate = self.left_attn(los, self.xp.zeros_like(los))  # lstate: (bs, n_units)
-        rstate = self.right_attn(ros, self.xp.zeros_like(ros))  # rstate: (bs, n_units)
-
-        state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*n_units)
-        relu_state = F.relu(F.stack(self.wc(state)))
-        concat_outputs = F.stack(self.wo(relu_state))
-        return self.xp.argmax(concat_outputs.data, axis=1)
 
     def make_oys(self, oxs):
         bs, xlen, _ = oxs.shape  # oxs: (bs, xlen, n_units)

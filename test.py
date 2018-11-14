@@ -12,8 +12,7 @@ def test(model, test, id2w, id2class):
     for i in range(len(test)):
         lxs, rxs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
-            # predict = model.predict(lxs, rxs, argmax=True)
-            predict = model.classify(lxs, rxs)
+            predict = model.predict(lxs, rxs, argmax=True)
         left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[0]])
         right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[0]])
         target = id2class.get(int(ts[0]))
