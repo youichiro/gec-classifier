@@ -5,11 +5,12 @@ from train import seq_convert
 from utils import make_dataset, tagging
 import chainer
 from chainer.dataset import convert
+from tqdm import tqdm
 
 
 def test(model, test, id2w, id2class):
     count, t = 0, 0
-    for i in range(len(test)):
+    for i in tqdm(range(len(test))):
         lxs, rxs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(lxs, rxs, argmax=True)
@@ -20,7 +21,7 @@ def test(model, test, id2w, id2class):
         result = True if predict == target else False
         count += 1
         t += 1 if result else 0
-        print('{} [{} {}] {}\t{}'.format(left_text, predict, target, right_text, result))
+        # print('{} [{} {}] {}\t{}'.format(left_text, predict, target, right_text, result))
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
