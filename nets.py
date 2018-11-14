@@ -231,6 +231,21 @@ class AttnContextClassifier(chainer.Chain):
         else:
             return concat_outputs
 
+    def classify(self, lxs, rxs):
+        rxs = rxs[:, ::-1]
+        los = self.left_encoder(lxs)
+        ros = self.right_encoder(rxs)
+        los = F.stack(los)  # los: (bs, xlen, n_units)
+        ros = F.stack(ros)  # ros: (bs, xlen, n_units)
+
+        lstate = self.left_attn(los, self.xp.zeros_like(los))  # lstate: (bs, n_units)
+        rstate = self.right_attn(ros, self.xp.zeros_like(ros))  # rstate: (bs, n_units)
+
+        state = F.concat((lstate, rstate), axis=1)  # state: (bs, 2*n_units)
+        relu_state = F.relu(F.stack(self.wc(state)))
+        concat_outputs = F.stack(self.wo(relu_state))
+        return self.xp.argmax(concat_outputs.data, axis=1)
+
     def make_oys(self, oxs):
         bs, xlen, _ = oxs.shape  # oxs: (bs, xlen, n_units)
         oxs_last = oxs[::, -1]  # 最後の列の値の配列 oxs_last: (bs, u_units)

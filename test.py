@@ -4,6 +4,7 @@ import nets
 from train import seq_convert
 from utils import make_dataset, tagging
 import chainer
+from chainer.dataset import convert
 
 
 def test(model, test, id2w, id2class):
@@ -11,7 +12,8 @@ def test(model, test, id2w, id2class):
     for i in range(len(test)):
         lxs, rxs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
-            predict = model.predict(lxs, rxs, argmax=True)
+            # predict = model.predict(lxs, rxs, argmax=True)
+            predict = model.classify(lxs, rxs)
         left_text = ''.join([id2w.get(int(idx), '') for idx in lxs[0]])
         right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[0]])
         target = id2class.get(int(ts[0]))
@@ -19,7 +21,7 @@ def test(model, test, id2w, id2class):
         result = True if predict == target else False
         count += 1
         t += 1 if result else 0
-        # print('{} [{} {} {}] {}\t{}'.format(left_text, error, predict, target, right_text, result))
+        print('{} [{} {}] {}\t{}'.format(left_text, predict, target, right_text, result))
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
@@ -37,8 +39,8 @@ def load_model():
     # prepare
     vocab = json.load(open(args.model_dir + '/vocab.json'))
     w2id = vocab['w2id']
-    class2id = vocab['classes']
-    # class2id = vocab['class2id']
+    # class2id = vocab['classes']
+    class2id = vocab['class2id']
     id2w = {v: k for k, v in w2id.items()}
     id2class = {v: k for k, v in class2id.items()}
     n_vocab = len(w2id)
@@ -47,10 +49,11 @@ def load_model():
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
+    score = opts['score']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
-    model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn)
+    model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn, score)
     chainer.serializers.load_npz(model_file, model)
 
     # test
