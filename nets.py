@@ -122,7 +122,7 @@ class CNNEncoder(chainer.Chain):
         self.out_units = out_units * 3
         self.dropout = dropout
 
-    def forward(self, xs):
+    def __call__(self, xs):
         x_block = chainer.dataset.convert.concat_examples(xs, padding=-1)
         ex_block = block_embed(self.embed, x_block, self.dropout)
         h_w3 = F.max(self.cnn_w3(ex_block), axis=2)
