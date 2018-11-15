@@ -31,7 +31,9 @@ def load_model():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--model_dir', required=True, help='Directory of trained models')
     parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
-    parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
+    # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
+    parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
+    parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     parser.add_argument('--err', required=True, help='Segmented error text file')
     parser.add_argument('--ans', required=True, help='Segmented answer text file')
     args = parser.parse_args()
@@ -39,8 +41,8 @@ def load_model():
     # prepare
     vocab = json.load(open(args.model_dir + '/vocab.json'))
     w2id = vocab['w2id']
-    # class2id = vocab['classes']
-    class2id = vocab['class2id']
+    class2id = vocab['classes']
+    # class2id = vocab['class2id']
     id2w = {v: k for k, v in w2id.items()}
     id2class = {v: k for k, v in class2id.items()}
     n_vocab = len(w2id)
@@ -49,11 +51,20 @@ def load_model():
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
-    score = opts['score']
+    # score = opts['score']
+    score = 'dot'
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
-    model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, args.rnn, score)
+    if args.encoder == 'CNN':
+        model = nets.ContextClassifier2(
+            n_vocab, n_units, n_class, n_layer, dropout, args.encoder)
+    elif args.attn == 'disuse':
+        model = nets.ContextClassifier(
+            n_vocab, n_units, n_class, n_layer, dropout, args.encoder)
+    elif args.attn == 'global':
+        model = nets.AttnContextClassifier(
+            n_vocab, n_units, n_class, n_layer, dropout, args.encoder, score)
     chainer.serializers.load_npz(model_file, model)
 
     # test

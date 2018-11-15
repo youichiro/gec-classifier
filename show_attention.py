@@ -28,15 +28,15 @@ def show(model, test, id2w, id2class):
         right_words = [id2w.get(int(idx), '') for idx in rxs[0]]
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
-        print('{} [{} {}] {}'.format(' '.join(left_words), predict, target, ' '.join(right_words)))
+        # print('{} [{} {}] {}'.format(' '.join(left_words), predict, target, ' '.join(right_words)))
         left_scores = model.left_attn.scores[0].data.tolist()
         right_scores = model.right_attn.scores[0].data.tolist()[::-1]
-        words = left_words + ['tgt'] + right_words
+        words = left_words + ['[{} {}]'.format(predict, target)] + right_words
         scores = left_scores + [0] + right_scores
         result = predict == target
-        html = str(result) + make_html(words, scores)
+        html = make_html(words, scores)
         with open(filename, 'a') as f:
-            f.write('{} [{} {}] {}<br>\n'.format(' '.join(left_words), predict, target, ' '.join(right_words)))
+            f.write('<b>{}</b>\n'.format(result))
             f.write(html + '\n')
 
 
