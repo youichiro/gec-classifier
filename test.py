@@ -70,7 +70,8 @@ def load_model():
     score = opts['score']
     # score = 'dot'
     encoder = opts['encoder']
-    n_encoder = opts['n_encoder']
+    # n_encoder = opts['n_encoder']
+    n_encoder = 2
     attn = opts['attn']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
@@ -90,14 +91,14 @@ def load_model():
     ans_data = open(args.ans).readlines()
     testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
                 if len(err) == len(ans) and err != ans]
-    test, _ = make_dataset(testdata, w2id, class2id, n_encoder=n_encoder)
+    test_data, _ = make_dataset(testdata, w2id, class2id, n_encoder=n_encoder)
 
-    return model, test, id2w, id2class, n_encoder
+    return model, test_data, id2w, id2class, n_encoder
 
 
 if __name__ == '__main__':
-    model, test, id2w, id2class, n_encoder = load_model()
+    model, test_data, id2w, id2class, n_encoder = load_model()
     if n_encoder == 2:
-        test(model, test, id2w, id2class)
+        test(model, test_data, id2w, id2class)
     elif n_encoder == 1:
-        test2(model, test, id2w, id2class)
+        test2(model, test_data, id2w, id2class)
