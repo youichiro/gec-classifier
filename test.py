@@ -32,7 +32,7 @@ def test2(model, test, id2w, id2class):
         xs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(xs, argmax=True)
-        text = ''.joint([id2w.get(int(idx), '') for idx in xs[0]])
+        text = ''.join([id2w.get(int(idx), '') for idx in xs[0]])
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
         result = True if predict == target else False
@@ -70,8 +70,7 @@ def load_model():
     score = opts['score']
     # score = 'dot'
     encoder = opts['encoder']
-    # n_encoder = opts['n_encoder']
-    n_encoder = 2
+    n_encoder = int(opts.get('n_encoder', 2))
     attn = opts['attn']
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
