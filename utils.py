@@ -54,7 +54,7 @@ def split_text(lines):
     return left_words, right_words, targets
 
 
-def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, multi_encoder=True):
+def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, n_encoder=2):
     """
     example return:
         dataset = [
@@ -78,7 +78,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         w2id = get_vocab(words, vocab_size, min_freq)
         class2id = get_class(targets)
 
-    if multi_encoder:
+    if n_encoder == 2:
         dataset = [
             (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id))
             for lxs, rxs, t

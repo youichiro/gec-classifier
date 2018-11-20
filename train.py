@@ -62,7 +62,8 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
-    parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN', 'CNNsingle'], help='Type of Decoder NN')
+    parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
+    parser.add_argument('--n_encoder', default=2, choices=[1, 2], help='Number of Encoders')
     parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'])
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
@@ -71,10 +72,9 @@ def main():
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    multi_encoder = False if args.encoder == 'CNNsingle' else True
-    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq, multi_encoder=multi_encoder)
+    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq, n_encoder=args.n_encoder)
     w2id, class2id = converters['w2id'], converters['class2id']
-    valid, _ = make_dataset(args.valid, w2id, class2id, multi_encoder=multi_encoder)
+    valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder)
     n_vocab = len(w2id)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
@@ -93,7 +93,7 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
-    if args.encoder == 'CNNsingle':
+    if args.encoder == 'CNN' and args.n_encoder == 1:
         model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
     elif args.encoder == 'CNN':
         model = nets.ContextClassifier2(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
