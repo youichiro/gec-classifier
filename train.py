@@ -26,12 +26,17 @@ class SaveModel(chainer.training.Extension):
 
 
 def seq_convert(batch, device=None):
-    print(batch)
-    lxs, rxs, ts = zip(*batch)
-    lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
-    rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
-    ts_block = convert.concat_examples(ts, device)
-    return (lxs_block, rxs_block, ts_block)
+    if len(batch[0]) == 3:
+        lxs, rxs, ts = zip(*batch)
+        lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
+        rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
+        ts_block = convert.concat_examples(ts, device)
+        return (lxs_block, rxs_block, ts_block)
+    elif len(batch[0]) == 2:
+        xs, ts = zip(*batch)
+        xs_block = convert.concat_examples(xs, device, padding=IGNORE_ID)
+        ts_block = convert.concat_examples(ts, device, padding=IGNORE_ID)
+        return (xs_block, ts_block)
 
 
 def unknown_rate(data):
@@ -69,7 +74,7 @@ def main():
     multi_encoder = False if args.encoder == 'CNNsingle' else True
     train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq, multi_encoder=multi_encoder)
     w2id, class2id = converters['w2id'], converters['class2id']
-    valid, _ = make_dataset(args.valid, w2id, class2id)
+    valid, _ = make_dataset(args.valid, w2id, class2id, multi_encoder=multi_encoder)
     n_vocab = len(w2id)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
@@ -90,7 +95,7 @@ def main():
     # model
     if args.encoder == 'CNNsingle':
         model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
-    if args.encoder == 'CNN':
+    elif args.encoder == 'CNN':
         model = nets.ContextClassifier2(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
     elif args.attn == 'disuse':
         model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)

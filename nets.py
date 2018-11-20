@@ -154,7 +154,7 @@ class Classifier(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, encoder='CNN'):
         super().__init__()
         with self.init_scope():
-            if encoder == 'CNN':
+            if encoder == 'CNN' or encoder == 'CNNsingle':
                 self.encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
             else:
                 self.encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder)
