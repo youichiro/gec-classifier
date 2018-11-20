@@ -26,6 +26,7 @@ class SaveModel(chainer.training.Extension):
 
 
 def seq_convert(batch, device=None):
+    print(batch)
     lxs, rxs, ts = zip(*batch)
     lxs_block = convert.concat_examples(lxs, device, padding=IGNORE_ID)
     rxs_block = convert.concat_examples(rxs, device, padding=IGNORE_ID)
@@ -34,8 +35,12 @@ def seq_convert(batch, device=None):
 
 
 def unknown_rate(data):
-    n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, ts in data)
-    total = sum(ls.size + rs.size for ls, rs, ts in data)
+    if len(data[0]) == 3:
+        n_unk = sum((ls == UNK_ID).sum() + (rs == UNK_ID).sum() for ls, rs, ts in data)
+        total = sum(ls.size + rs.size for ls, rs, ts in data)
+    elif len(data[0]) == 2:
+        n_unk = sum((xs == UNK_ID).sum() for xs, ts in data)
+        total = sum(xs.size for xs, ts in data)
     return n_unk / total
 
 
@@ -52,7 +57,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
-    parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
+    parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN', 'CNNsingle'], help='Type of Decoder NN')
     parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'])
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
@@ -61,7 +66,8 @@ def main():
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq)
+    multi_encoder = False if args.encoder == 'CNNsingle' else True
+    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq, multi_encoder=multi_encoder)
     w2id, class2id = converters['w2id'], converters['class2id']
     valid, _ = make_dataset(args.valid, w2id, class2id)
     n_vocab = len(w2id)
@@ -82,6 +88,8 @@ def main():
                                                   repeat=False, shuffle=False)
 
     # model
+    if args.encoder == 'CNNsingle':
+        model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
     if args.encoder == 'CNN':
         model = nets.ContextClassifier2(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
     elif args.attn == 'disuse':

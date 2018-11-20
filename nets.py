@@ -45,7 +45,7 @@ def sequence_embed_with_pos(embed, xs, ps, posW, dropout=0.1):
     return exs
 
 
-class Encoder(chainer.Chain):
+class RNNEncoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
@@ -69,7 +69,7 @@ class Encoder(chainer.Chain):
         return concat_outputs
 
 
-class AttnEncoder(Encoder):
+class RNNAttnEncoder(RNNEncoder):
     def __call__(self, xs):
         exs = sequence_embed(self.embed, xs, self.dropout)
         if self.rnn_type == 'LSTM':
@@ -79,7 +79,7 @@ class AttnEncoder(Encoder):
         return oxs
 
 
-class AttnEncoderWithPos(chainer.Chain):
+class RNNAttnEncoderWithPos(chainer.Chain):
     def __init__(self, n_vocab, n_units, posW, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         n_pos = len(posW)
@@ -151,11 +151,14 @@ class MLP(chainer.ChainList):
 
 
 class Classifier(chainer.Chain):
-    def __init__(self, encoder, n_class, dropout=0.1):
+    def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, encoder='CNN'):
         super().__init__()
         with self.init_scope():
-            self.encoder = encoder
-            self.output = L.Linear(encoder.out_units, n_class)
+            if encoder == 'CNN':
+                self.encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
+            else:
+                self.encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder)
+            self.output = L.Linear(self.encoder.out_units, n_class)
         self.dropout = dropout
 
     def __call__(self, xs, ts):
@@ -182,8 +185,8 @@ class ContextClassifier(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = Encoder(n_vocab, n_units, n_layer, dropout, rnn)
-            self.right_encoder = Encoder(n_vocab, n_units, n_layer, dropout, rnn)
+            self.left_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, rnn)
+            self.right_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, rnn)
             self.output = L.Linear(n_units + n_units, n_class)
         self.dropout = dropout
 
@@ -218,8 +221,8 @@ class ContextClassifier2(chainer.Chain):
                 self.left_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
                 self.right_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout)
             else:
-                self.left_encoder = Encoder(n_vocab, n_units, n_layer, dropout, encoder)
-                self.right_encoder = Encoder(n_vocab, n_units, n_layer, dropout, encoder)
+                self.left_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder)
+                self.right_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder)
             self.output = L.Linear(n_units + n_units, n_class)
         self.dropout = dropout
 
@@ -291,8 +294,8 @@ class AttnContextClassifier(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM', score='dot'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
-            self.right_encoder = AttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
+            self.left_encoder = RNNAttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
+            self.right_encoder = RNNAttnEncoder(n_vocab, n_units, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score)
             self.right_attn = GlobalAttention(n_units, score)
             self.wc = L.Linear(4*n_units, n_units)
@@ -348,8 +351,8 @@ class AttnContextClassifierWithPos(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_class, posW, n_layers=1, dropout=0.1, rnn='LSTM'):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = AttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
-            self.right_encoder = AttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
+            self.left_encoder = RNNAttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
+            self.right_encoder = RNNAttnEncoderWithPos(n_vocab, n_units, posW, n_layers, dropout, rnn)
             self.left_attn = GlobalAttention(n_units, score='dot')
             self.right_attn = GlobalAttention(n_units, score='dot')
             self.wc = L.Linear(2*n_units, n_units)

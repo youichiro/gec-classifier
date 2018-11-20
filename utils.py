@@ -54,7 +54,7 @@ def split_text(lines):
     return left_words, right_words, targets
 
 
-def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1):
+def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, multi_encoder=True):
     """
     example return:
         dataset = [
@@ -78,11 +78,18 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         w2id = get_vocab(words, vocab_size, min_freq)
         class2id = get_class(targets)
 
-    dataset = [
-        (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id))
-        for lxs, rxs, t
-        in zip(left_words, right_words, targets)
-    ]
+    if multi_encoder:
+        dataset = [
+            (make_context_array(lxs, w2id), make_context_array(rxs, w2id), make_target_array(t, class2id))
+            for lxs, rxs, t
+            in zip(left_words, right_words, targets)
+        ]
+    else:
+        dataset = [
+            (numpy.concatenate(make_context_array(lxs, w2id), make_context_array(rxs, w2id)), make_target_array(t, class2id))
+            for lxs, rxs, t
+            in zip(left_words, right_words, targets)
+        ]
     converters = {'w2id': w2id, 'class2id': class2id}
 
     return dataset, converters
