@@ -20,6 +20,7 @@ def clean_text(text):
 
 
 def get_vocab(words, vocab_size, min_freq):
+    words += ['<TARGET>']
     counter = Counter()
     for w in words:
         counter[w] += 1
@@ -86,7 +87,10 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         ]
     else:
         dataset = [
-            (numpy.concatenate((make_context_array(lxs, w2id), make_context_array(rxs, w2id))), make_target_array(t, class2id))
+            (numpy.concatenate( (make_context_array(lxs, w2id),
+                                 numpy.array([w2id['<TARGET>']], numpy.int32),
+                                 make_context_array(rxs, w2id)) ),
+             make_target_array(t, class2id) )
             for lxs, rxs, t
             in zip(left_words, right_words, targets)
         ]
