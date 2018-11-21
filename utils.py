@@ -20,12 +20,12 @@ def clean_text(text):
 
 
 def get_vocab(words, vocab_size, min_freq):
-    words += ['TARGET']
     counter = Counter()
     for w in words:
         counter[w] += 1
     w2id = {w: i for i, (w, f) in enumerate(counter.most_common(vocab_size), 1) if f >= min_freq}
     w2id['UNK'] = UNK_ID
+    w2id['TARGET'] = len(w2id)
     return w2id
 
 
