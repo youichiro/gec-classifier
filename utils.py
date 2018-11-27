@@ -4,7 +4,7 @@ import numpy
 import random
 from tqdm import tqdm
 from collections import Counter
-import chainer.computational_graph as c
+from mecab import Mecab
 
 
 IGNORE_ID = -1
@@ -12,10 +12,14 @@ UNK_ID = 0
 split_regex = r'^(.*) <(.)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
 
+mecab_dict_file = '/tools/env/lib/mecab/dic/unidic'
+mecab = Mecab(mecab_dict_file)
+
 
 def clean_text(text):
     text = mojimoji.zen_to_han(text, kana=False)
     text = digit_regex.sub('#', text)
+    text = ' '.join(mecab.to_kana(text))  # 平仮名に変換
     return text
 
 
@@ -48,6 +52,8 @@ def split_text(lines):
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
         m = re.match(split_regex, line.replace('\n', ''))
+        if not m:
+            continue
         left_text, target, right_text = m.groups()
         left_words.append(clean_text(left_text).split())
         right_words.append(clean_text(right_text).split())
@@ -71,7 +77,6 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
-    lines = [line for line in lines if re.match(split_regex, line)]
     left_words, right_words, targets = split_text(lines)
 
     if not w2id or not class2id:
@@ -113,6 +118,7 @@ def tagging(err, ans):
 
 
 def graph(model):
+    import chainer.computational_graph as c
     """モデルのネットワークグラフを描写する"""
     lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
     rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
