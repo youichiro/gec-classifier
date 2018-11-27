@@ -16,10 +16,11 @@ mecab_dict_file = '/tools/env/lib/mecab/dic/unidic'
 mecab = Mecab(mecab_dict_file)
 
 
-def clean_text(text):
+def clean_text(text, to_kana):
     text = mojimoji.zen_to_han(text, kana=False)
     text = digit_regex.sub('#', text)
-    text = ' '.join(mecab.to_kana(text))  # 平仮名に変換
+    if to_kana:
+        text = ' '.join(mecab.to_kana(text))  # 平仮名に変換
     return text
 
 
@@ -48,20 +49,20 @@ def make_target_array(target, class2id):
     return numpy.array([class2id[target]], numpy.int32)
 
 
-def split_text(lines):
+def split_text(lines, to_kana):
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
         m = re.match(split_regex, line.replace('\n', ''))
         if not m:
             continue
         left_text, target, right_text = m.groups()
-        left_words.append(clean_text(left_text).split())
-        right_words.append(clean_text(right_text).split())
+        left_words.append(clean_text(left_text, to_kana).split())
+        right_words.append(clean_text(right_text, to_kana).split())
         targets.append(target)
     return left_words, right_words, targets
 
 
-def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, n_encoder=2):
+def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, n_encoder=2, to_kana=False):
     """
     example return:
         dataset = [
@@ -77,7 +78,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
-    left_words, right_words, targets = split_text(lines)
+    left_words, right_words, targets = split_text(lines, to_kana)
 
     if not w2id or not class2id:
         words = [w for words in left_words for w in words] + [w for words in right_words for w in words]

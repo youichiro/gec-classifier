@@ -65,6 +65,7 @@ def main():
     parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
     parser.add_argument('--n_encoder', type=int, default=2, help='Number of Encoders')
     parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'])
+    parser.add_argument('--kana', default=False, action='store_true', help='Whether to convert to kana')
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
@@ -72,9 +73,10 @@ def main():
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
-    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq, n_encoder=args.n_encoder)
+    train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq,
+                                     n_encoder=args.n_encoder, to_kana=args.kana)
     w2id, class2id = converters['w2id'], converters['class2id']
-    valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder)
+    valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana)
     n_vocab = len(w2id)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)

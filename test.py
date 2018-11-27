@@ -67,11 +67,11 @@ def load_model():
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
-    score = opts['score']
-    # score = 'dot'
+    score = opts.get('score', 'dot')
     encoder = opts['encoder']
     n_encoder = int(opts.get('n_encoder', 2))
     attn = opts['attn']
+    to_kana = opts.get('kana', False)
     model_file = args.model_dir + '/model-e{}.npz'.format(args.epoch)
 
     # model
@@ -90,7 +90,7 @@ def load_model():
     ans_data = open(args.ans).readlines()
     testdata = [tagging(err, ans) for err, ans in zip(err_data, ans_data)
                 if len(err) == len(ans) and err != ans]
-    test_data, _ = make_dataset(testdata, w2id, class2id, n_encoder=n_encoder)
+    test_data, _ = make_dataset(testdata, w2id, class2id, n_encoder=n_encoder, to_kana=to_kana)
 
     return model, test_data, id2w, id2class, n_encoder
 
