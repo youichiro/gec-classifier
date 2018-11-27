@@ -84,8 +84,8 @@ def main():
     args.__dict__['train_size'] = len(train)
     args.__dict__['unknown_rate'] = unk_rate
     os.makedirs(args.save_dir, exist_ok=True)
-    json.dump(vocab, open(args.save_dir + '/vocab.json', 'w'))
-    json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w'))
+    json.dump(vocab, open(args.save_dir + '/vocab.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    json.dump(args.__dict__, open(args.save_dir + '/opts.json', 'w', encoding='utf-8'), ensure_ascii=False)
     print('Train size:', len(train))
     print('Vocab size:', n_vocab)
     print('Unknown rate: {:.2f}%'.format(unk_rate * 100))
