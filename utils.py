@@ -16,7 +16,7 @@ mecab_dict_file = '/tools/env/lib/mecab/dic/unidic'
 mecab = Mecab(mecab_dict_file)
 
 
-def clean_text(text, to_kana):
+def clean_text(text, to_kana=False):
     text = mojimoji.zen_to_han(text, kana=False)
     text = digit_regex.sub('#', text)
     if to_kana:
