@@ -53,6 +53,7 @@ def main():
         os.remove(args.save_valid)
 
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
+    lines = random.shuffle(lines)  # 順序をシャッフル
     for line in tqdm(lines):
         line = clean_text(line.rstrip())
         words, parts = mecab.tagger(line)
