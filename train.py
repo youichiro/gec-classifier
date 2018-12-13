@@ -64,7 +64,7 @@ def main():
     # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
     parser.add_argument('--n_encoder', type=int, default=2, help='Number of Encoders')
-    parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'])
+    parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'], help=' ')
     parser.add_argument('--kana', default=False, action='store_true', help='Whether to convert to kana')
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
