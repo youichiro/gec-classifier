@@ -4,6 +4,7 @@ __pycache__
 .vscode
 datasets
 models
+results
 jupyter
 *.html
 !__init__.py

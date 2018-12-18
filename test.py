@@ -9,6 +9,8 @@ from tqdm import tqdm
 
 
 def test_on_pair_encoder(model, test, id2w, id2class, do_show):
+    if do_show:
+        print('text\tanswer\tpredict\tresult')
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         lxs, rxs, ts = seq_convert([test[i]])
@@ -27,6 +29,8 @@ def test_on_pair_encoder(model, test, id2w, id2class, do_show):
 
 
 def test_on_single_encoder(model, test, id2w, id2class, do_show):
+    if do_show:
+        print('text\tanswer\tpredict\tresult')
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         xs, ts = seq_convert([test[i]])
