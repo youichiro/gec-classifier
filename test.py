@@ -8,7 +8,7 @@ from chainer.dataset import convert
 from tqdm import tqdm
 
 
-def test(model, test, id2w, id2class):
+def test_on_pair_encoder(model, test, id2w, id2class):
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         lxs, rxs, ts = seq_convert([test[i]])
@@ -18,15 +18,14 @@ def test(model, test, id2w, id2class):
         right_text = ''.join([id2w.get(int(idx), '') for idx in rxs[0]])
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
-        result = True if predict == target else False
+        result = 1 if predict == target else 0
         count += 1
-        t += 1 if result else 0
-        # print('{} [{} {}] {}\t{}'.format(left_text, predict, target, right_text, result))
-
+        t += result
+        print(f'{left_text} TARGET {right_text}\t{target}\t{predict}\t{result}')
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
 
-def test2(model, test, id2w, id2class):
+def test_on_single_encoder(model, test, id2w, id2class):
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         xs, ts = seq_convert([test[i]])
@@ -35,9 +34,10 @@ def test2(model, test, id2w, id2class):
         text = ''.join([id2w.get(int(idx), '') for idx in xs[0]])
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
-        result = True if predict == target else False
+        result = 1 if predict == target else 0
         count += 1
-        t += 1 if result else 0
+        t += result
+        print(f'{text}\t{target}\t{predict}\t{result}')
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
@@ -47,9 +47,6 @@ def load_model():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--model_dir', required=True, help='Directory of trained models')
     parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
-    # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
-    # parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Encoder NN')
-    # parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
     parser.add_argument('--err', required=True, help='Segmented error text file')
     parser.add_argument('--ans', required=True, help='Segmented answer text file')
     args = parser.parse_args()
@@ -57,7 +54,6 @@ def load_model():
     # prepare
     vocab = json.load(open(args.model_dir + '/vocab.json'))
     w2id = vocab['w2id']
-    # class2id = vocab['classes']
     class2id = vocab['class2id']
     id2w = {v: k for k, v in w2id.items()}
     id2class = {v: k for k, v in class2id.items()}
@@ -98,6 +94,6 @@ def load_model():
 if __name__ == '__main__':
     model, test_data, id2w, id2class, n_encoder = load_model()
     if n_encoder == 2:
-        test(model, test_data, id2w, id2class)
+        test_on_pair_encoder(model, test_data, id2w, id2class)
     elif n_encoder == 1:
-        test2(model, test_data, id2w, id2class)
+        test_on_single_encoder(model, test_data, id2w, id2class)
