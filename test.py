@@ -8,7 +8,7 @@ from chainer.dataset import convert
 from tqdm import tqdm
 
 
-def test_on_pair_encoder(model, test, id2w, id2class):
+def test_on_pair_encoder(model, test, id2w, id2class, do_show):
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         lxs, rxs, ts = seq_convert([test[i]])
@@ -21,11 +21,12 @@ def test_on_pair_encoder(model, test, id2w, id2class):
         result = 1 if predict == target else 0
         count += 1
         t += result
-        print(f'{left_text} TARGET {right_text}\t{target}\t{predict}\t{result}')
+        if do_show:
+            print(f'{left_text} TARGET {right_text}\t{target}\t{predict}\t{result}')
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
 
-def test_on_single_encoder(model, test, id2w, id2class):
+def test_on_single_encoder(model, test, id2w, id2class, do_show):
     count, t = 0, 0
     for i in tqdm(range(len(test))):
         xs, ts = seq_convert([test[i]])
@@ -37,7 +38,8 @@ def test_on_single_encoder(model, test, id2w, id2class):
         result = 1 if predict == target else 0
         count += 1
         t += result
-        print(f'{text}\t{target}\t{predict}\t{result}')
+        if do_show:
+            print(f'{text}\t{target}\t{predict}\t{result}')
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
@@ -49,6 +51,7 @@ def load_model():
     parser.add_argument('--epoch', type=int, required=True, help='Epoch of model to use')
     parser.add_argument('--err', required=True, help='Segmented error text file')
     parser.add_argument('--ans', required=True, help='Segmented answer text file')
+    parser.add_argument('--show', default=False, action='store_true', help='Whether to show results')
     args = parser.parse_args()
 
     # prepare
@@ -88,12 +91,12 @@ def load_model():
                 if len(err) == len(ans) and err != ans]
     test_data, _ = make_dataset(testdata, w2id, class2id, n_encoder=n_encoder, to_kana=to_kana)
 
-    return model, test_data, id2w, id2class, n_encoder
+    return model, test_data, id2w, id2class, n_encoder, args.show
 
 
 if __name__ == '__main__':
-    model, test_data, id2w, id2class, n_encoder = load_model()
+    model, test_data, id2w, id2class, n_encoder, do_show = load_model()
     if n_encoder == 2:
-        test_on_pair_encoder(model, test_data, id2w, id2class)
+        test_on_pair_encoder(model, test_data, id2w, id2class, do_show)
     elif n_encoder == 1:
-        test_on_single_encoder(model, test_data, id2w, id2class)
+        test_on_single_encoder(model, test_data, id2w, id2class, do_show)
