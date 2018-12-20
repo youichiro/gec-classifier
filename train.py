@@ -79,6 +79,8 @@ def main():
     valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana)
     _, initialW = get_pretrained_emb(args.emb) if args.emb else None
     n_vocab = len(w2id)
+    print('n_vocab', n_vocab)
+    print('initialW.shape', initialW.shape)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id}

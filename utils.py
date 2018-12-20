@@ -45,13 +45,13 @@ def get_pretrained_emb(emb_path):
     """Pretrained word embeddingsファイルから辞書w2id, 重みWを取得する"""
     lines = open(emb_path).readlines()
     lines = lines[1:]  # 1行目を除く
-    words, params = [], []
-    for line in lines:
+    words = {}
+    params = []
+    for i, line in tqdm(enumerate(lines)):
         split = line.replace('\n', '').split(' ')
-        words.append(split[0])
+        words[split[0]] = i + 1
         params.append(split[1:-1])
     # w2idの作成
-    w2id = {w: i for i, w in enumerate(words, 1)}
     w2id['UNK'] = UNK_ID
     w2id['TARGET'] = len(w2id)
     # Wの作成
