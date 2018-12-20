@@ -82,7 +82,7 @@ def load_model():
     if encoder == 'CNN' and n_encoder == 1:
         model = nets.Classifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif encoder == 'CNN':
-        model = nets.ContextClassifier2(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
+        model = nets.ContextClassifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif attn == 'disuse':
         model = nets.ContextClassifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif attn == 'global':
