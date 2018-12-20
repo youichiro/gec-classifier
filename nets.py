@@ -108,7 +108,7 @@ class RNNAttnEncoderWithPos(chainer.Chain):
 
 class CNNEncoder(chainer.Chain):
     def __init__(self, n_vocab, n_units, n_layers, dropout=0.1, initialW=None):
-        n_emb = initialW.shape[1] if initialW.any() else n_units
+        n_emb = initialW.shape[1] if initialW and initialW.any() else n_units
         out_units = n_units // 3
         super(CNNEncoder, self).__init__()
         with self.init_scope():
