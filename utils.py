@@ -45,11 +45,11 @@ def get_pretrained_emb(emb_path):
     """Pretrained word embeddingsファイルから辞書w2id, 重みWを取得する"""
     lines = open(emb_path).readlines()
     lines = lines[1:]  # 1行目を除く
-    words = {}
+    w2id = {}
     params = []
     for i, line in tqdm(enumerate(lines)):
         split = line.replace('\n', '').split(' ')
-        words[split[0]] = i + 1
+        w2id[split[0]] = i + 1
         params.append(split[1:-1])
     # w2idの作成
     w2id['UNK'] = UNK_ID
@@ -108,8 +108,9 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         if not emb:
             words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
             w2id = get_vocab(words, vocab_size, min_freq)
+            initialW = None
         else:
-            w2id, _ = get_pretrained_emb(emb)
+            w2id, initialW = get_pretrained_emb(emb)
         class2id = get_class(targets)
 
     if n_encoder == 2:
@@ -127,7 +128,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
             for lxs, rxs, t
             in zip(left_words, right_words, targets)
         ]
-    converters = {'w2id': w2id, 'class2id': class2id}
+    converters = {'w2id': w2id, 'class2id': class2id, 'initialW': initialW}
 
     return dataset, converters
 
