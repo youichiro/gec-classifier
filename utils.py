@@ -30,8 +30,8 @@ def get_vocab(words, vocab_size, min_freq):
     for w in words:
         counter[w] += 1
     w2id = {w: i for i, (w, f) in enumerate(counter.most_common(vocab_size), 1) if f >= min_freq}
-    w2id['UNK'] = UNK_ID
-    w2id['TARGET'] = len(w2id)
+    w2id['<UNK>'] = UNK_ID
+    w2id['<TARGET>'] = len(w2id)
     return w2id
 
 
@@ -47,16 +47,17 @@ def get_pretrained_emb(emb_path):
     lines = lines[1:]  # 1行目を除く
     w2id = {}
     params = []
-    for i, line in tqdm(enumerate(lines)):
+    for i, line in enumerate(tqdm(lines)):
         split = line.replace('\n', '').split(' ')
         w2id[split[0]] = i + 1
         params.append(split[1:-1])
+
     # w2idの作成
-    w2id['UNK'] = UNK_ID
-    w2id['TARGET'] = len(w2id)
+    w2id['<UNK>'] = UNK_ID
+    w2id['<TARGET>'] = len(w2id)
     # Wの作成
-    params.insert(0, [0.0]*len(params[0]))  # UNKのパラメータ
-    params.append([0.0]*len(params[0]))  # TARGETのパラメータ
+    params.insert(0, [0.0]*len(params[0]))  # <UNK>のパラメータ
+    params.append([0.0]*len(params[0]))  # <TARGET>のパラメータ
     W = numpy.array(params, numpy.float32)
     return w2id, W
 
@@ -103,12 +104,12 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     left_words, right_words, targets = split_text(lines, to_kana)
+    initialW = None
 
     if not w2id or not class2id:
         if not emb:
             words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
             w2id = get_vocab(words, vocab_size, min_freq)
-            initialW = None
         else:
             w2id, initialW = get_pretrained_emb(emb)
         class2id = get_class(targets)
@@ -122,7 +123,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     else:
         dataset = [
             (numpy.concatenate( (make_context_array(lxs, w2id),
-                                 numpy.array([w2id['TARGET']], numpy.int32),
+                                 numpy.array([w2id['<TARGET>']], numpy.int32),
                                  make_context_array(rxs, w2id)) ),
              make_target_array(t, class2id) )
             for lxs, rxs, t

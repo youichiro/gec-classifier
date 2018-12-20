@@ -16,15 +16,15 @@ def test_on_pair_encoder(model, test, id2w, id2class, do_show):
         lxs, rxs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(lxs, rxs, argmax=True)
-        left_text = ' '.join([id2w.get(int(idx), 'UNK') for idx in lxs[0]])
-        right_text = ' '.join([id2w.get(int(idx), 'UNK') for idx in rxs[0]])
+        left_text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in lxs[0]])
+        right_text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in rxs[0]])
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
         result = 1 if predict == target else 0
         count += 1
         t += result
         if do_show:
-            print(f'{left_text} TARGET {right_text}\t{target}\t{predict}\t{result}')
+            print(f'{left_text} <TARGET> {right_text}\t{target}\t{predict}\t{result}')
     print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
 
 
@@ -36,7 +36,7 @@ def test_on_single_encoder(model, test, id2w, id2class, do_show):
         xs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(xs, argmax=True)
-        text = ' '.join([id2w.get(int(idx), 'UNK') for idx in xs[0]])
+        text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in xs[0]])
         target = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
         result = 1 if predict == target else 0
