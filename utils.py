@@ -41,10 +41,10 @@ def get_class(targets):
     class2id = {t: i for i, t in enumerate(targets)}
     return class2id
 
-def get_pretrained_emb(emb_path):
+def get_pretrained_emb(emb_path, vocab_size):
     """Pretrained word embeddingsファイルから辞書w2id, 重みWを取得する"""
     lines = open(emb_path).readlines()
-    lines = lines[1:]  # 1行目を除く
+    lines = lines[1:vocab_size+1]  # 1行目を除く
     w2id = {}
     params = []
     for i, line in enumerate(tqdm(lines)):
@@ -111,7 +111,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
             words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
             w2id = get_vocab(words, vocab_size, min_freq)
         else:
-            w2id, initialW = get_pretrained_emb(emb)
+            w2id, initialW = get_pretrained_emb(emb, vocab_size)
         class2id = get_class(targets)
 
     if n_encoder == 2:
