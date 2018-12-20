@@ -9,7 +9,7 @@ from chainer.backends import cuda
 from chainer.training import extensions
 
 import nets
-from utils import make_dataset, IGNORE_ID, UNK_ID
+from utils import make_dataset, get_pretrained_emb, IGNORE_ID, UNK_ID
 
 
 class SaveModel(chainer.training.Extension):
@@ -61,11 +61,11 @@ def main():
     parser.add_argument('--layer', type=int, default=1, help='Number of hidden layers')
     parser.add_argument('--dropout', type=float, default=0.1, help='Dropout rate')
     parser.add_argument('--attn', default='global', choices=['disuse', 'global'], help='Type of attention mechanism')
-    # parser.add_argument('--rnn', default='LSTM', choices=['LSTM', 'GRU'], help='Type of RNN')
     parser.add_argument('--encoder', default='LSTM', choices=['LSTM', 'GRU', 'CNN'], help='Type of Decoder NN')
     parser.add_argument('--n_encoder', type=int, default=2, help='Number of Encoders')
     parser.add_argument('--score', default='dot', choices=['dot', 'general', 'concat'], help=' ')
     parser.add_argument('--kana', default=False, action='store_true', help='Whether to convert to kana')
+    parser.add_argument('--emb', default=None, help='Pretrained word embedding file')
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
@@ -74,9 +74,10 @@ def main():
 
     # prepare
     train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq,
-                                     n_encoder=args.n_encoder, to_kana=args.kana)
+                                     n_encoder=args.n_encoder, to_kana=args.kana, emb=args.emb)
     w2id, class2id = converters['w2id'], converters['class2id']
     valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana)
+    _, initialW = get_pretrained_emb(args.emb) if args.emb else None
     n_vocab = len(w2id)
     n_class = len(class2id)
     unk_rate = unknown_rate(train)
@@ -96,13 +97,13 @@ def main():
 
     # model
     if args.encoder == 'CNN' and args.n_encoder == 1:
-        model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
+        model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.encoder == 'CNN':
-        model = nets.ContextClassifier2(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
+        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder)
+        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, args.score)
+        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, args.score, initialW)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)
