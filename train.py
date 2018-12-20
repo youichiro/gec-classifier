@@ -79,9 +79,12 @@ def main():
     valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana)
     n_vocab = len(w2id)
     n_class = len(class2id)
+    n_emb = initialW.shape[1] if args.emb else args.unit
     unk_rate = unknown_rate(train)
     vocab = {'class2id': class2id, 'w2id': w2id}
     args.__dict__['train_size'] = len(train)
+    args.__dict__['n_vocab'] = n_vocab
+    args.__dict__['n_emb'] = n_emb
     args.__dict__['unknown_rate'] = unk_rate
     os.makedirs(args.save_dir, exist_ok=True)
     json.dump(vocab, open(args.save_dir + '/vocab.json', 'w', encoding='utf-8'), ensure_ascii=False)
@@ -96,13 +99,13 @@ def main():
 
     # model
     if args.encoder == 'CNN' and args.n_encoder == 1:
-        model = nets.Classifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
+        model = nets.Classifier(n_vocab, n_emb, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.encoder == 'CNN':
-        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
+        model = nets.ContextClassifier(n_vocab, n_emb, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
+        model = nets.ContextClassifier(n_vocab, n_emb, args.unit, n_class, args.layer, args.dropout, args.encoder, initialW)
     elif args.attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, args.unit, n_class, args.layer, args.dropout, args.encoder, args.score, initialW)
+        model = nets.AttnContextClassifier(n_vocab, n_emb, args.unit, n_class, args.layer, args.dropout, args.encoder, args.score, initialW)
     if args.gpuid >= 0:
         cuda.get_device_from_id(args.gpuid).use()
         model.to_gpu(args.gpuid)

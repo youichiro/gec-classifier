@@ -67,6 +67,7 @@ def load_model():
     n_vocab = len(w2id)
     n_class = len(class2id)
     opts = json.load(open(args.model_dir + '/opts.json'))
+    n_emb = opts['n_emb']
     n_units = opts['unit']
     n_layer = opts['layer']
     dropout = opts['dropout']
@@ -79,13 +80,13 @@ def load_model():
 
     # model
     if encoder == 'CNN' and n_encoder == 1:
-        model = nets.Classifier(n_vocab, n_units, n_class, n_layer, dropout, encoder)
+        model = nets.Classifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif encoder == 'CNN':
-        model = nets.ContextClassifier2(n_vocab, n_units, n_class, n_layer, dropout, encoder)
+        model = nets.ContextClassifier2(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif attn == 'disuse':
-        model = nets.ContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, encoder)
+        model = nets.ContextClassifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder)
     elif attn == 'global':
-        model = nets.AttnContextClassifier(n_vocab, n_units, n_class, n_layer, dropout, encoder, score)
+        model = nets.AttnContextClassifier(n_vocab, n_emb, n_units, n_class, n_layer, dropout, encoder, score)
     chainer.serializers.load_npz(model_file, model)
 
     # test

@@ -46,9 +46,8 @@ def sequence_embed_with_pos(embed, xs, ps, posW, dropout=0.1):
 
 
 class RNNEncoder(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_layers=1, dropout=0.1, rnn='LSTM', initialW=None):
+    def __init__(self, n_vocab, n_emb, n_units, n_layers=1, dropout=0.1, rnn='LSTM', initialW=None):
         super().__init__()
-        n_emb = initialW.shape[1] if initialW.any() else n_units
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_emb, initialW, ignore_label=IGNORE_ID)
             if rnn == 'LSTM':
@@ -56,7 +55,7 @@ class RNNEncoder(chainer.Chain):
             elif rnn == 'GRU':
                 self.rnn = L.NStepGRU(n_layers, n_emb, n_units, dropout)
         self.n_layers = n_layers
-        self.out_units = n_units
+        self.n_out = n_units
         self.dropout = dropout
         self.rnn_type = rnn
 
@@ -107,21 +106,20 @@ class RNNAttnEncoderWithPos(chainer.Chain):
 
 
 class CNNEncoder(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_layers, dropout=0.1, initialW=None):
-        n_emb = initialW.shape[1] if initialW and initialW.any() else n_units
-        out_units = n_units // 3
+    def __init__(self, n_vocab, n_emb, n_units, n_layers, dropout=0.1, initialW=None):
+        n_out = n_units // 3
         super(CNNEncoder, self).__init__()
         with self.init_scope():
             self.embed = L.EmbedID(n_vocab, n_emb, initialW, ignore_label=IGNORE_ID)
-            self.cnn_w3 = L.Convolution2D(n_emb, out_units, ksize=(3, 1), stride=1,
+            self.cnn_w3 = L.Convolution2D(n_emb, n_out, ksize=(3, 1), stride=1,
                                           pad=(2, 0), nobias=True)
-            self.cnn_w4 = L.Convolution2D(n_emb, out_units, ksize=(4, 1), stride=1,
+            self.cnn_w4 = L.Convolution2D(n_emb, n_out, ksize=(4, 1), stride=1,
                                           pad=(3, 0), nobias=True)
-            self.cnn_w5 = L.Convolution2D(n_emb, out_units, ksize=(5, 1), stride=1,
+            self.cnn_w5 = L.Convolution2D(n_emb, n_out, ksize=(5, 1), stride=1,
                                           pad=(4, 0), nobias=True)
-            self.mlp = MLP(n_layers, out_units * 3, dropout)
+            self.mlp = MLP(n_layers, n_out * 3, dropout)
 
-        self.out_units = out_units * 3
+        self.n_out = n_out * 3
         self.dropout = dropout
 
     def __call__(self, xs):
@@ -153,14 +151,14 @@ class MLP(chainer.ChainList):
 
 
 class Classifier(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, encoder='CNN', initialW=None):
+    def __init__(self, n_vocab, n_emb, n_units, n_class, n_layer=1, dropout=0.1, encoder='CNN', initialW=None):
         super().__init__()
         with self.init_scope():
             if encoder == 'CNN':
-                self.encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout, initialW)
+                self.encoder = CNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, initialW)
             else:
-                self.encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder, initialW)
-            self.output = L.Linear(self.encoder.out_units, n_class)
+                self.encoder = RNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, encoder, initialW)
+            self.output = L.Linear(self.encoder.n_out, n_class)
         self.dropout = dropout
 
     def __call__(self, xs, ts):
@@ -184,15 +182,15 @@ class Classifier(chainer.Chain):
 
 
 class ContextClassifier(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layer=1, dropout=0.1, encoder='LSTM', initialW=None):
+    def __init__(self, n_vocab, n_emb, n_units, n_class, n_layer=1, dropout=0.1, encoder='LSTM', initialW=None):
         super().__init__()
         with self.init_scope():
             if encoder == 'CNN':
-                self.left_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout, initialW)
-                self.right_encoder = CNNEncoder(n_vocab, n_units, n_layer, dropout, initialW)
+                self.left_encoder = CNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, initialW)
+                self.right_encoder = CNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, initialW)
             else:
-                self.left_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder, initialW)
-                self.right_encoder = RNNEncoder(n_vocab, n_units, n_layer, dropout, encoder, initialW)
+                self.left_encoder = RNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, encoder, initialW)
+                self.right_encoder = RNNEncoder(n_vocab, n_emb, n_units, n_layer, dropout, encoder, initialW)
             self.output = L.Linear(n_units + n_units, n_class)
         self.dropout = dropout
 
@@ -260,11 +258,11 @@ class GlobalAttention(chainer.Chain):
 
 
 class AttnContextClassifier(chainer.Chain):
-    def __init__(self, n_vocab, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM', score='dot', initialW=None):
+    def __init__(self, n_vocab, n_emb, n_units, n_class, n_layers=1, dropout=0.1, rnn='LSTM', score='dot', initialW=None):
         super().__init__()
         with self.init_scope():
-            self.left_encoder = RNNAttnEncoder(n_vocab, n_units, n_layers, dropout, rnn, initialW)
-            self.right_encoder = RNNAttnEncoder(n_vocab, n_units, n_layers, dropout, rnn, initialW)
+            self.left_encoder = RNNAttnEncoder(n_vocab, n_emb, n_units, n_layers, dropout, rnn, initialW)
+            self.right_encoder = RNNAttnEncoder(n_vocab, n_emb, n_units, n_layers, dropout, rnn, initialW)
             self.left_attn = GlobalAttention(n_units, score)
             self.right_attn = GlobalAttention(n_units, score)
             self.wc = L.Linear(4*n_units, n_units)
