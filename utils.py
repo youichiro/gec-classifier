@@ -59,7 +59,6 @@ def get_pretrained_emb(emb_path, vocab_size, to_kana):
         if word == '</s>': continue
         if to_kana:
             word_kana = conv.do(word)  # カタカナに変換
-            print(word, word_kana)
             if word_kana in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
                 continue
             w2id[word_kana] = n
