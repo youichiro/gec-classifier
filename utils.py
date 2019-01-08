@@ -4,6 +4,7 @@ import numpy
 import random
 from tqdm import tqdm
 from collections import Counter
+from pykakasi import kakasi
 
 
 IGNORE_ID = -1
@@ -11,6 +12,9 @@ UNK_ID = 0
 split_regex = r'^(.*) <(.)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
 MECAB_DICT_PATH = '/tools/env/lib/mecab/dic/unidic'
+kakasi = kakasi()
+kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
+conv = kakasi.getConverter()
 
 
 def clean_text(text, to_kana=False):
@@ -54,13 +58,11 @@ def get_pretrained_emb(emb_path, vocab_size, to_kana):
         vec = split[1:-1]
         if word == '</s>': continue
         if to_kana:
-            from mecab import Mecab
-            mecab = Mecab(MECAB_DICT_PATH)
-            word_kana = mecab.to_kana(word)  # カタカナに変換
-            assert len(word_kana) == 1, '{} {}'.format(word, len(word_kana))  # カタカナ1単語に変換することを保証
-            if word_kana[0] in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
+            word_kana = conv.do(word)  # カタカナに変換
+            print(word, word_kana)
+            if word_kana in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
                 continue
-            w2id[word_kana[0]] = n
+            w2id[word_kana] = n
             params.append(vec)
         else:
             w2id[word] = n
