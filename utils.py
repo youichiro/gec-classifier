@@ -52,14 +52,15 @@ def get_pretrained_emb(emb_path, vocab_size, to_kana):
         split = line.replace('\n', '').split(' ')
         word = split[0]
         vec = split[1:-1]
+        if word == '</s>': continue
         if to_kana:
             from mecab import Mecab
             mecab = Mecab(MECAB_DICT_PATH)
-            word_kana = mecab.to_kana(word)[0]  # カタカナに変換
-            assert len(mecab.to_kana(word)) == 1  # カタカナ1単語に変換することを保証
-            if word_kana in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
+            word_kana = mecab.to_kana(word)  # カタカナに変換
+            assert len(word_kana) == 1, '{} {}'.format(word, len(word_kana))  # カタカナ1単語に変換することを保証
+            if word_kana[0] in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
                 continue
-            w2id[word_kana] = n
+            w2id[word_kana[0]] = n
             params.append(vec)
         else:
             w2id[word] = n
