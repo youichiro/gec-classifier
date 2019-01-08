@@ -10,7 +10,7 @@ IGNORE_ID = -1
 UNK_ID = 0
 split_regex = r'^(.*) <(.)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
-mecab_dict_file = '/tools/env/lib/mecab/dic/unidic'
+MECAB_DICT_PATH = '/tools/env/lib/mecab/dic/unidic'
 
 
 def clean_text(text, to_kana=False):
@@ -19,7 +19,7 @@ def clean_text(text, to_kana=False):
     text = digit_regex.sub('#', text)
     if to_kana:
         from mecab import Mecab
-        mecab = Mecab(mecab_dict_file)
+        mecab = Mecab(MECAB_DICT_PATH)
         text = ' '.join(mecab.to_kana(text))  # 平仮名に変換
     return text
 
@@ -41,16 +41,30 @@ def get_class(targets):
     class2id = {t: i for i, t in enumerate(targets)}
     return class2id
 
-def get_pretrained_emb(emb_path, vocab_size):
+def get_pretrained_emb(emb_path, vocab_size, to_kana):
     """Pretrained word embeddingsファイルから辞書w2id, 重みWを取得する"""
     lines = open(emb_path).readlines()
     lines = lines[1:vocab_size+1]  # 1行目を除く
     w2id = {}
     params = []
+    n = 1
     for i, line in enumerate(tqdm(lines)):
         split = line.replace('\n', '').split(' ')
-        w2id[split[0]] = i + 1
-        params.append(split[1:-1])
+        word = split[0]
+        vec = split[1:-1]
+        if to_kana:
+            from mecab import Mecab
+            mecab = Mecab(MECAB_DICT_PATH)
+            word_kana = mecab.to_kana(word)[0]  # カタカナに変換
+            assert len(mecab.to_kana(word)) == 1  # カタカナ1単語に変換することを保証
+            if word_kana in w2id.keys():  # 同じ単語があれば先に登録した方のみ保持する
+                continue
+            w2id[word_kana] = n
+            params.append(vec)
+        else:
+            w2id[word] = n
+            params.append(vec)
+        n += 1
 
     # w2idの作成
     w2id['<UNK>'] = UNK_ID
@@ -59,6 +73,8 @@ def get_pretrained_emb(emb_path, vocab_size):
     params.insert(0, [0.0]*len(params[0]))  # <UNK>のパラメータ
     params.append([0.0]*len(params[0]))  # <TARGET>のパラメータ
     W = numpy.array(params, numpy.float32)
+    # Wの行数とw2idに登録された単語数が一致することを保証
+    assert W.shape[0] == len(w2id)
     return w2id, W
 
 
@@ -111,7 +127,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
             words = [w for words in left_words for w in words] + [w for words in right_words for w in words]
             w2id = get_vocab(words, vocab_size, min_freq)
         else:
-            w2id, initialW = get_pretrained_emb(emb, vocab_size)
+            w2id, initialW = get_pretrained_emb(emb, vocab_size, to_kana)
         class2id = get_class(targets)
 
     if n_encoder == 2:

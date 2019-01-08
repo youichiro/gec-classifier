@@ -2,8 +2,8 @@ import MeCab
 
 
 class Mecab:
-    def __init__(self, dict_file):
-        self.t = MeCab.Tagger('-d {}'.format(dict_file))
+    def __init__(self, dict_path):
+        self.t = MeCab.Tagger('-d {}'.format(dict_path))
 
     def tagger(self, text):
         n = self.t.parse(text)

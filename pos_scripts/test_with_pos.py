@@ -2,7 +2,6 @@ import json
 import argparse
 import numpy
 import nets
-import train_with_pos
 from train_with_pos import seq_convert
 from utils import tagging
 from utils_pos import make_dataset_with_pos
