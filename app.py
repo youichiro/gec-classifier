@@ -28,7 +28,7 @@ checker = Checker(mecab_dict_file, model_file, vocab_file, opts_file)
 
 @app.route('/', methods=['GET', 'POST'])
 def top():
-    return render_template('checker.html')
+    return render_template('checker.html', prefix=URL_PREFIX)
 
 
 @app.route('/api/correction', methods=['GET'])
