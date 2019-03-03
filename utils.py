@@ -22,9 +22,6 @@ def clean_text(text, to_kana=False):
     text = mojimoji.zen_to_han(text, kana=False)
     text = digit_regex.sub('#', text)
     if to_kana:
-        # from mecab import Mecab
-        # mecab = Mecab(MECAB_DICT_PATH)
-        # text = ' '.join(mecab.to_kana(text))  # 平仮名に変換
         text = conv.do(text)
     return text
 
