@@ -104,7 +104,7 @@ def make_target_array(target, class2id):
 def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
-    for line in tqdm(lines):
+    for line in lines:
         m = re.match(split_regex, line.replace('\n', ''))
         if not m:
             continue
