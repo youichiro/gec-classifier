@@ -2,9 +2,8 @@ __pycache__
 .DS_Store
 .python-version
 .vscode
-datasets
-models
-results
+src/datasets/*
+src/models/*
+src/results/*
 jupyter
-*.html
 !__init__.py

@@ -1,0 +1,185 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}格助詞誤りチェッカー{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    html {
+        position: relative;
+        min-height: 100%;
+    }
+    body {
+        margin-bottom: 120px;
+        height: auto;
+        height: 100%;
+    }
+    #result {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .token-item {
+        align-self: flex-start;
+    }
+    .token-score0 {
+        color: black;
+        font-weight: bolder;
+    }
+    .token-score1 {
+        color: black;
+    }
+    .token-score2 {
+        color: gray;
+    }
+    .token-score3 {
+        color: darkgrey;
+    }
+    .token-score4 {
+        color: darkgrey;
+    }
+    .token-btn {
+        margin: 1px 1px;
+    }
+    .token-info {
+        position: relative;
+        display: none;
+        margin: 10px 0;
+        padding: 10px 10px;
+        background: lavenderblush;
+        pointer-events: none;
+        border-radius: 5px;
+        filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.1));
+    }
+    .token-info::before {
+        content: '';
+        position: absolute;
+        top: -30px;
+        left: 26%;
+        margin-left: -15px;
+        border: 15px solid transparent;
+        border-bottom: 15px solid lavenderblush;
+    }
+    #check-btn:active {
+        -ms-transform: translateY(4px);
+        -webkit-transform: translateY(4px);
+        transform: translateY(4px);
+        border-bottom: none;
+    }
+    .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        height: 60px;
+        background-color: #f5f5f5;
+        text-align: center;
+    }
+    body > .container {
+        padding: 60px 15px 0;
+    }
+    .container .text-muted {
+        margin: 20px 0;
+    }
+    .footer > .container {
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>格助詞誤りチェッカー</h1>
+    <hr>
+    <form action="/" method="POST">
+        <div class="form-group">
+            <textarea class="form-control" id="input_text" rows="5" maxlength="300" name="input_text"
+                placeholder="ここに文を入力"></textarea>
+        </div>
+    </form>
+    <br>
+    <div class="card">
+        <div class="card-header">結果</div>
+        <div class="card-body">
+            <div style="text-align: right;">
+                <p id="check-btn" class='btn btn-primary'>予測結果を表示</p>
+            </div>
+            <div id="result"></div>
+        </div>
+    </div>
+    <br>
+    <br>
+    <h2>仕様</h2>
+    <hr>
+    <p>言語モデル確率をもとに、文中の格助詞「が, を, に, で」の誤りを訂正し、不足を補完します。</p>
+    <p><button class="btn btn-warning">黄色の形態素</button> は訂正および補完した格助詞を示しています。</p>
+    <p><button class="btn btn-success">緑色の形態素</button> は訂正をした結果、入力と一致した格助詞を示しています。</p>
+    <p><button class='btn btn-primary'>予測結果を表示</button> を押すと、訂正候補とそれらの予測確率の割合を表したものを表示します。</p>
+    <br>
+    <h2>誤り文の例</h2>
+    <hr>
+    <ul>
+        <li>彼は車に買った</li>
+        <li>その間違いで直した</li>
+        <li>昨日カレー食べた</li>
+        <li>学習者で間違いやすい格助詞は、作文をする上重要な文法です</li>
+    </ul>
+</div>
+<footer class="footer">
+    <div class="container">
+        <p class="text-muted">長岡技術科学大学 自然言語処理研究室</p>
+    </div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $("#check-btn").hide();
+    $("#input_text").keyup(function () {
+        $("#check-btn").show();
+        var inputData = {};
+        inputData["input_text"] = $(this).val();
+        $.ajax({
+            type: "GET",
+            url: "{{ prefix }}/api/correction",
+            data: inputData,
+            contentType: "application/JSON",
+            dataType: "JSON",
+            scriptCharset: "UTF-8",
+
+            success: function (result) {
+                $("#result").html("");
+                for (index in result["tokens"]) {
+                    token = result["tokens"][index];
+                    word = token[0];
+                    flag = token[1];
+                    if (!word) {
+                        s = $("<div class='token-item' style='width: 100%'>　</div>");
+                    } else {
+                        btnType = flag == 0 ? 'btn-light' : flag == 1 ? 'btn-warning' : 'btn-success';
+                        if (flag != 0) {
+                            keys = token[2]["keys"];
+                            scores = token[2]["scores"];
+                            var info = '';
+                            for (var i = 0; i < keys.length; i++) {
+                                info += "<span class='token-score" + i + "'>" + keys[i] + ": " + scores[i] + "%</span><br>"
+                            }
+                            s = $("<div class='token-item'><button type='button' class='btn " + btnType + " token-btn'>" + word + "</button>\
+                                        <div class='token-info'>" + info + "</div></div>");
+                        } else {
+                            s = $("<div class='token-item'><button type='button' class='btn " + btnType + " token-btn'>" + word + '</button></div>');
+                        }
+                    }
+                    $("#result").append(s);
+                }
+            },
+            error: function (xhr, status, err) {
+                console.log("error");
+            }
+        });
+    });
+    $("#check-btn").click(function () {
+        $(".token-info").slideToggle();
+    });
+</script>
+{% endblock %}
