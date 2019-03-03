@@ -24,12 +24,12 @@ class Model:
         n_class = len(class2id)
         opts = json.load(open(opts_file))
         n_emb = opts['n_emb']
-        n_unit = opts['n_unit']
-        n_layer = opts['n_layer']
+        n_unit = opts['unit']
+        n_layer = opts['layer']
         dropout = opts['dropout']
         score = opts['score']
         encoder = opts['encoder']
-        n_encoder = int(opts['n_encoder']))
+        n_encoder = int(opts['n_encoder'])
         attn = opts['attn']
         to_kana = opts['kana']
 
@@ -62,12 +62,12 @@ class Model:
         if self.n_encoder == 2:
             lxs, rxs, ts = seq_convert(test_data)
             with chainer.no_backprop_mode(), chainer.using_config('train', False):
-                predict = model.predict(lxs, rxs, argmax=True)
+                predict = self.model.predict(lxs, rxs, argmax=True)
             predict = self.id2class.get(int(predict[0]))
         else:
             xs, ts = seq_convert(test_data)
             with chainer.no_backprop_mode(), chainer.using_config('train', False):
-                predict = model.predict(xs, argmax=True)
+                predict = self.model.predict(xs, argmax=True)
             predict = self.id2class.get(int(predict[0]))
         return predict
 
