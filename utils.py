@@ -26,6 +26,18 @@ def clean_text(text, to_kana=False):
     return text
 
 
+def normalize_text(text):
+    """全角→半角, 数字の正規化を行う"""
+    text = mojimoji.zen_to_han(text, kana=False)
+    text = digit_regex.sub('#', text)
+    return text
+
+
+def convert_to_kana(text):
+    """平仮名に変換する"""
+    return conv.do(text)
+
+
 def get_vocab(words, vocab_size, min_freq):
     """単語→IDの辞書を作成する"""
     counter = Counter()

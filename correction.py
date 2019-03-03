@@ -3,7 +3,7 @@ import argparse
 import chainer
 from nets import CNNEncoder, Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
-from utils import clean_text, make_dataset
+from utils import make_dataset, normalize_text, convert_to_kana
 from train import seq_convert
 
 
@@ -72,8 +72,15 @@ class Model:
         return predict
 
     def correction(self, sentence):
-        sentence = clean_text(sentence, self.to_kana)  # 全角→半角，数字→# (, カナ変換)
-        words, parts = self.mecab.tagger(sentence)  # 形態素解析
+        sentence = normalize_text(sentence)  # 全角→半角，数字→#
+        org_words, parts = self.mecab.tagger(sentence)  # 形態素解析
+        if self.to_kana:
+            words = convert_to_kana(' '.join(org_words)).split(' ')  # カナ変換
+            if len(org_words) != len(words):
+                return "error"
+        else:
+            words = org_words[::]
+
         target_idx = self.get_target_positions(words, parts)  # 訂正対象の位置リスト
         for idx in target_idx:
             marked_sentence = '{} <{}> {}'.format(
@@ -82,6 +89,6 @@ class Model:
                                         n_encoder=self.n_encoder, to_kana=self.to_kana)
             predict = self.predict(test_data)
             words[idx] = predict  # 予測に置換
-        corrected = ''.join(words)
+            org_words[idx] = predict
+        corrected = ''.join(org_words)
         return corrected
-
