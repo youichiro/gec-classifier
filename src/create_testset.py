@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse
 from utils import tagging
 

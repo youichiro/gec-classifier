@@ -33,3 +33,5 @@ RUN git clone https://db07bc1dc6b5ced230d48b4dc0bf4be3e6cff2f2:x-oauth-basic@git
 
 # pip install
 RUN pip3.6 install gunicorn flask flask_bootstrap mecab-python3 numpy mojimoji pykakasi tqdm chainer
+
+# モデルファイルを/home/gec-classifier/src/modelsにコピー

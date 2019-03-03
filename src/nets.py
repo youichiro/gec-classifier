@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy
 import chainer
 import chainer.functions as F

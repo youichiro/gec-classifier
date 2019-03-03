@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import argparse
 import chainer
@@ -15,13 +16,13 @@ class Checker:
         self.mecab = Mecab(mecab_dict_file)
 
         # prepare
-        vocab = json.load(open(vocab_file))
+        vocab = json.load(open(vocab_file, encoding='utf-8'))
         w2id, class2id = vocab['w2id'], vocab['class2id']
         id2w = {v: k for k, v in w2id.items()}
         id2class = {v: k for k, v in class2id.items()}
         n_vocab = len(w2id)
         n_class = len(class2id)
-        opts = json.load(open(opts_file))
+        opts = json.load(open(opts_file, encoding='utf-8'))
         n_emb = opts['n_emb']
         n_unit = opts['unit']
         n_layer = opts['layer']
