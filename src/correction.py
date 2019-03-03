@@ -129,12 +129,15 @@ class Checker:
             else:
                 fix_flags[idx] = 2  # 無修正フラグ
 
-            classes = list(self.class2id.keys())[::]
-            if ' ' in classes:  # 謎の空白クラスを削除
-                rm_idx = classes.index(' ')
-                classes = classes[:rm_idx] + classes[rm_idx+1:]
-                scores = scores[:rm_idx] + scores[rm_idx+1:]
-            score_list[idx] = {'keys': classes, 'scores': scores}
+            score_dic = dict(zip(self.class2id.keys(), scores))
+            if ' ' in score_dic.keys():
+                del score_dic[' ']  # 謎の空白クラスを削除
+            sorted_score_dic = dict(sorted(score_dic.items(), key=lambda x: x[1], reverse=True))
+            d = {
+                'keys': list(sorted_score_dic.keys()),
+                'scores': list(sorted_score_dic.values())
+            }
+            score_list[idx] = d
 
         return [[word, fix_flag, score] for word, fix_flag, score in zip(org_words, fix_flags, score_list)]
 
