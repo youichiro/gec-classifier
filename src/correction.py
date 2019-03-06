@@ -72,7 +72,6 @@ class Checker:
                 predict = self.model.predict(xs, argmax=True)[0]
                 scores = self.model.predict(xs, softmax=True)[0]
         predict = self.id2class.get(int(predict))
-        scores = [f'{score*100:.1f}' for score in scores]
         return predict, scores
 
     def correction(self, sentence):
@@ -135,7 +134,7 @@ class Checker:
             sorted_score_dic = dict(sorted(score_dic.items(), key=lambda x: x[1], reverse=True))
             d = {
                 'keys': list(sorted_score_dic.keys()),
-                'scores': list(sorted_score_dic.values())
+                'scores': [f'{score*100:.1f}' for score in sorted_score_dic.values()]
             }
             score_list[idx] = d
 

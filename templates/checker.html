@@ -120,8 +120,8 @@
     <ul>
         <li>彼は車に買った</li>
         <li>その間違いで直した</li>
-        <li>昨日カレー食べた</li>
-        <li>学習者で間違いやすい格助詞は、作文をする上重要な文法です</li>
+        <li>昨日カレーが食べた</li>
+        <li>学習者で間違いやすい格助詞は、作文をする上に重要な文法です</li>
     </ul>
 </div>
 <footer class="footer">
@@ -134,11 +134,10 @@
 {% block scripts %}
 {{ super() }}
 <script>
-    $("#check-btn").hide();
-    $("#input_text").keyup(function () {
+    function addItem () {
         $("#check-btn").show();
         var inputData = {};
-        inputData["input_text"] = $(this).val();
+        inputData["input_text"] = $("#input_text").val();
         $.ajax({
             type: "GET",
             url: "{{ prefix }}/api/correction",
@@ -146,8 +145,9 @@
             contentType: "application/JSON",
             dataType: "JSON",
             scriptCharset: "UTF-8",
-
-            success: function (result) {
+            timeout: 10000
+        }).then(
+            function (result) {
                 $("#result").html("");
                 for (index in result["tokens"]) {
                     token = result["tokens"][index];
@@ -165,7 +165,7 @@
                                 info += "<span class='token-score" + i + "'>" + keys[i] + ": " + scores[i] + "%</span><br>"
                             }
                             s = $("<div class='token-item'><button type='button' class='btn " + btnType + " token-btn'>" + word + "</button>\
-                                        <div class='token-info'>" + info + "</div></div>");
+                                    <div class='token-info'>" + info + "</div></div>");
                         } else {
                             s = $("<div class='token-item'><button type='button' class='btn " + btnType + " token-btn'>" + word + '</button></div>');
                         }
@@ -173,11 +173,23 @@
                     $("#result").append(s);
                 }
             },
-            error: function (xhr, status, err) {
+            function (xhr, status, err) {
                 console.log("error");
             }
-        });
+        );
+    }
+
+    $("#check-btn").hide();
+
+    var timeout_id = null;
+    $("#input_text").keyup(function () {
+        if (timeout_id) {
+            // keyupされた時点で既にsendの実行が予約されていたら一旦削除
+            clearTimeout(timeout_id);
+        }
+        timeout_id = setTimeout(addItem, 500);  // 500ms後にajax
     });
+
     $("#check-btn").click(function () {
         $(".token-info").slideToggle();
     });
