@@ -6,7 +6,4 @@ jupyter
 src/datasets/*
 src/results/*
 src/models/*
-!src/models/model.npz
-!src/models/vocab.json
-!src/models/opts.json
 !__init__.py
