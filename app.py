@@ -16,7 +16,7 @@ app.config['JSON_AS_ASCII'] = False
 bootstrap = Bootstrap(app)
 URL_PREFIX = os.environ.get('URL_PREFIX', '')
 if URL_PREFIX:
-    URL_PREFIX = 'http://' + URL_PREFIX
+    URL_PREFIX = '//' + URL_PREFIX
 ini = configparser.ConfigParser()
 ini.read('./config.ini', 'UTF-8')
 mecab_dict_file = ini.get(mode, 'mecab_dict_file')
