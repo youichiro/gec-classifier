@@ -3,6 +3,9 @@ __pycache__
 .python-version
 .vscode
 jupyter
+datasets
+results
+models
 src/datasets/*
 src/results/*
 src/models/*
