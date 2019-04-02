@@ -100,9 +100,13 @@ def load_model():
     return model, test_data, id2w, id2class, n_encoder, args.show
 
 
-if __name__ == '__main__':
+def main():
     model, test_data, id2w, id2class, n_encoder, do_show = load_model()
     if n_encoder == 2:
         test_on_pair_encoder(model, test_data, id2w, id2class, do_show)
     elif n_encoder == 1:
         test_on_single_encoder(model, test_data, id2w, id2class, do_show)
+
+
+if __name__ == '__main__':
+    main()
