@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import argparse
 from correction import Checker
 
@@ -15,7 +16,7 @@ def main():
                         help='Whether to show results')
     args = parser.parse_args()
 
-    mecab_dict_file = '/usr/local/lib/mecab/dic/unidic'
+    mecab_dict_file = os.environ['MECABDIC']
     checker = Checker(mecab_dict_file, args.model, args.vocab, args.opts, not args.forward, args.show)
 
     error_data = open(args.err, 'r').readlines()
