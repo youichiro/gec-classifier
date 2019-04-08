@@ -25,27 +25,35 @@ def main():
     for err, ans in zip(error_data, answer_data):
         err = err.replace('\n', '')
         ans = ans.replace('\n', '')
-        output = checker.correction_test(err, ans)
+        _ = checker.correction_test(err, ans)
 
-    acc = checker.acc / checker.total_predict_num * 100
-    acc_one = checker.acc_of_one / checker.n_of_one * 100
-    n_multi_prediction = checker.total_predict_num - checker.n_of_one
-    acc_multi = (checker.acc - checker.acc_of_one) / n_multi_prediction * 100
+    precision = checker.precision / checker.total_predict_num * 100
+    recall = checker.recall / checker.total_error_num * 100
     print(f"""
     \n[Total]
-    Accuracy: {acc:.5}%
+    Precision: {precision:.5}% ({checker.precision}/{checker.total_predict_num})
+    Recall: {recall:.5}% ({checker.recall}/{checker.total_error_num})
     # sentence: {checker.n}
-    # total prediction: {checker.total_predict_num}
-    \n[For one error]
-    Accuracy: {acc_one:.5}%
-    # sentence: {checker.n_of_one}
-    # total prediction: {checker.n_of_one}
-    \n[For multiple error]
-    Accuracy: {acc_multi:.5}%
-    # sentence: {checker.n - checker.n_of_one}
-    # total prediction: {n_multi_prediction}
+    # error: {checker.error}
     """)
 
+    error_num_dic = {}
+    for _, error_num in checker.target_statistic:
+        if error_num in error_num_dic.keys():
+            error_num_dic[error_num] += 1
+        else:
+            error_num_dic[error_num] = 1
+    print('[# error VS # sentence]')
+    for k, v in sorted(error_num_dic.items()):
+        print(f'\t{k}: {v}')
+
+    print('\n[NAIST confusion matrix (error -> answer)]')
+    for k, v in sorted(checker.naist_confusion.items()):
+        print(f'\t{k}: {v}')
+
+    print('\n[Predict confusion matrix (error -> predict)]')
+    for k, v in sorted(checker.predict_confusion.items()):
+        print(f'\t{k}: {v}')
 
 if __name__ == '__main__':
     main()

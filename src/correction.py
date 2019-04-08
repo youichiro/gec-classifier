@@ -12,7 +12,7 @@ class Checker:
     def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, reverse=True, show=False):
         # mecab
         self.target_lemma = ['が', 'を', 'に', 'で']
-        self.target_pos = '助詞-格助詞'
+        self.target_pos = ['助詞-格助詞', '助動詞']
         self.mecab = Mecab(mecab_dict_file)
 
         # prepare
@@ -55,11 +55,15 @@ class Checker:
 
         # for test
         self.show = show
-        self.acc = 0
+        self.precision = 0
+        self.recall = 0
         self.total_predict_num = 0
+        self.total_error_num = 0
         self.n = 0
-        self.acc_of_one = 0
-        self.n_of_one = 0
+        self.target_statistic = []
+        self.error = 0
+        self.naist_confusion = {}
+        self.predict_confusion = {}
 
     def _preprocess(self, sentence):
         """正規化，形態素解析，カナ変換を行う"""
@@ -76,7 +80,7 @@ class Checker:
     def _get_target_positions(self, words, parts):
         """訂正対象の位置を返す"""
         target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
-                      if p == self.target_pos and w in self.target_lemma \
+                      if p in self.target_pos and w in self.target_lemma \
                       and i != 0 and i != len(words) - 1]  # 文頭と文末の格助詞は除く
         return target_idx
 
@@ -116,46 +120,74 @@ class Checker:
 
     def correction_test(self, err, ans):
         """訂正して正解率を求める"""
+        self.n += 1
         err_org_words, err_words, err_parts = self._preprocess(err)
         ans_org_words, ans_words, _ = self._preprocess(ans)
         if err_org_words is None or ans_org_words is None:
             return "error"
 
         target_idx = self._get_target_positions(err_words, err_parts)
+        error_idx = [idx for idx in range(len(err_words) - 1) if err_words[idx] != ans_words[idx]]
+        err_word_lens = [len(t) for t in err_words]
+        ans_word_lens = [len(t) for t in ans_words]
+        self.total_error_num += len(error_idx)  # 間違い箇所数
+        if err_word_lens != ans_word_lens:
+            print('error')
+            print(' '.join(err_words))
+            print(' '.join(ans_words))
+            print()
+            self.error += 1
+            return ''.join(err_org_words)
+        self.total_predict_num += len(target_idx)  # 予測する箇所数
+
+        # 後ろから訂正
         if self.reverse is True:
             target_idx = target_idx[::-1]
-        is_one_error = True if len(target_idx) == 1 else False
 
+        predict_list = []
         for idx in target_idx:
+            origin_error = err_words[idx]
             marked_sentence = '{} <{}> {}'.format(
                 ' '.join(err_words[:idx]), err_words[idx], ' '.join(err_words[idx+1:]))  # 格助詞を<>で囲む
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
                                         n_encoder=self.n_encoder, to_kana=self.to_kana)
             predict, _ = self._predict(test_data)
+            predict_list.append(predict)
+            # 予測に置換
+            err_words[idx] = predict
+            err_org_words[idx] = predict
             answer = ans_words[idx]
 
             # count
             if predict == answer:
-                self.acc += 1
-                if is_one_error:
-                    self.acc_of_one += 1
-            self.total_predict_num += 1
+                self.precision += 1  # 予測して，かつ正解
+                if idx in error_idx:
+                    self.recall += 1  # 間違い箇所であり，かつ正解
 
-            err_words[idx] = predict  # 予測に置換
-            err_org_words[idx] = predict
+            # NAIST confusion matrixを作成
+            cell = f'{origin_error}->{answer}'
+            if cell in self.naist_confusion.keys():
+                self.naist_confusion[cell] += 1
+            else:
+                self.naist_confusion[cell] = 1
+
+            # Predict confusion matrixを作成
+            cell = f'{origin_error}->{predict}'
+            if cell in self.predict_confusion.keys():
+                self.predict_confusion[cell] += 1
+            else:
+                self.predict_confusion[cell] = 1
+
         corrected = ''.join(err_org_words)
-
         if self.show:
-            print(f'{self.n + 1}')
+            print(f'{self.n}')
             print(f'err: {err}')
             print(f'ans: {ans}')
             print(f'out: {corrected}')
             print(f'Result: {ans == corrected}\n')
 
-        # num. of sentence
-        self.n += 1
-        if is_one_error:
-            self.n_of_one += 1
+        # [1文中の対象格助詞の数，格助詞誤りの数]
+        self.target_statistic.append([len(target_idx), len(error_idx)])
 
         return corrected
 
