@@ -48,13 +48,15 @@ def test_on_single_encoder(model, test, id2w, id2class, do_show):
 
         # 格助詞別スコア
         total_particles[answer] += 1
-        if is_correct:
+        if predict == answer:
             accurate_particles[answer] += 1
 
         if do_show:
             print(f'{text}\t{answer}\t{predict}\t{predict == answer}')
 
     print('\nAccuracy {:.2f}% ({}/{})'.format(accurate / total_predict * 100, accurate, total_predict))
+    print(total_particles)
+    print(accurate_particles)
 
 
 def load_model():
