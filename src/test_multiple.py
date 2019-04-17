@@ -27,15 +27,6 @@ def main():
         ans = ans.replace('\n', '')
         _ = checker.correction_test(err, ans)
 
-    # precision = checker.precision / checker.total_predict_num * 100
-    # recall = checker.recall / checker.total_error_num * 100
-    # print(f"""
-    # \n[Total]
-    # Precision: {precision:.5}% ({checker.precision}/{checker.total_predict_num})
-    # Recall: {recall:.5}% ({checker.recall}/{checker.total_error_num})
-    # # sentence: {checker.num_sentence}
-    # # error: {checker.error}
-    # """)
     print(f'# sentence: {checker.num_sentence}')
     print(f'# error sentence: {checker.error}')
     print(f'# total prediction: {checker.total_predict_num}')

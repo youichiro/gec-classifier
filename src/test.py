@@ -12,21 +12,32 @@ from tqdm import tqdm
 def test_on_pair_encoder(model, test, id2w, id2class, do_show):
     if do_show:
         print('text\tanswer\tpredict\tresult')
-    count, t = 0, 0
+    total_predict, accurate = 0, 0
+    total_particles = {'が': 0, 'を': 0, 'に': 0, 'で': 0}
+    accurate_particles = {'が': 0, 'を': 0, 'に': 0, 'で': 0}
+
     for i in tqdm(range(len(test))):
         lxs, rxs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(lxs, rxs, argmax=True)
         left_text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in lxs[0]])
         right_text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in rxs[0]])
-        target = id2class.get(int(ts[0]))
+        answer = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
-        result = 1 if predict == target else 0
-        count += 1
-        t += result
+        total_predict += 1
+        accurate += 1 if predict == answer else 0
+
+        # 格助詞別スコア
+        total_particles[answer] += 1
+        if predict == answer:
+            accurate_particles[answer] += 1
+
         if do_show:
-            print(f'{left_text} <TARGET> {right_text}\t{target}\t{predict}\t{result}')
-    print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
+            print(f'{left_text} <TARGET> {right_text}\t{answer}\t{predict}\t{result}')
+
+    print(f'\nAccuracy {accurate / total_predict * 100:.2f}% ({accurate}/({total_predict}))')
+    for p in ['が', 'を', 'に', 'で']:
+        print(f'{p}: Acc. {accurate_particles[p] / total_particles[p] * 100:.2f}%  ({accurate_particles[p]}/{total_particles[p]})')
 
 
 def test_on_single_encoder(model, test, id2w, id2class, do_show):
@@ -54,9 +65,9 @@ def test_on_single_encoder(model, test, id2w, id2class, do_show):
         if do_show:
             print(f'{text}\t{answer}\t{predict}\t{predict == answer}')
 
-    print('\nAccuracy {:.2f}% ({}/{})'.format(accurate / total_predict * 100, accurate, total_predict))
-    print(total_particles)
-    print(accurate_particles)
+    print(f'\nAccuracy {accurate / total_predict * 100:.2f}% ({accurate}/({total_predict}))')
+    for p in ['が', 'を', 'に', 'で']:
+        print(f'{p}: Acc. {accurate_particles[p] / total_particles[p] * 100:.2f}%  ({accurate_particles[p]}/{total_particles[p]})')
 
 
 def load_model():
