@@ -174,18 +174,3 @@ def tagging(err, ans):
     idx = diff_ids[0] if len(diff_ids) == 1 else diff_ids[1]
     test = ans[:idx] + '<' + ans[idx] + '>' + ans[idx+1:]
     return test
-
-
-def graph(model):
-    """モデルのネットワークグラフを描写する"""
-    import chainer.computational_graph as c
-    lxs = numpy.array([[1, 2, 3], [7, 8, 9]])
-    rxs = numpy.array([[4, 5, 6], [10, 11, 12]])
-    ts = numpy.array([[1], [2]])
-    lps = numpy.array([[1, 2, 3], [7, 8, 9]])
-    rps = numpy.array([[4, 5, 6], [10, 11, 12]])
-    loss = model(lxs, rxs, ts, lps, rps)
-    g = c.build_computational_graph([loss])
-    with open('/graph.dot', 'w') as o:
-        o.write(g.dump())
-    print('Has witten graph.dot')

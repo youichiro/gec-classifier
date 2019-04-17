@@ -27,15 +27,26 @@ def main():
         ans = ans.replace('\n', '')
         _ = checker.correction_test(err, ans)
 
-    precision = checker.precision / checker.total_predict_num * 100
-    recall = checker.recall / checker.total_error_num * 100
-    print(f"""
-    \n[Total]
-    Precision: {precision:.5}% ({checker.precision}/{checker.total_predict_num})
-    Recall: {recall:.5}% ({checker.recall}/{checker.total_error_num})
-    # sentence: {checker.num_sentence}
-    # error: {checker.error}
-    """)
+    # precision = checker.precision / checker.total_predict_num * 100
+    # recall = checker.recall / checker.total_error_num * 100
+    # print(f"""
+    # \n[Total]
+    # Precision: {precision:.5}% ({checker.precision}/{checker.total_predict_num})
+    # Recall: {recall:.5}% ({checker.recall}/{checker.total_error_num})
+    # # sentence: {checker.num_sentence}
+    # # error: {checker.error}
+    # """)
+    print(f'# sentence: {checker.num_sentence}')
+    print(f'# error sentence: {checker.error}')
+    print(f'# total prediction: {checker.total_predict_num}')
+    print(f'# total error: {checker.total_error_num}')
+    print(f'# accurate prediction: {checker.accurate}')
+    print(f'# accurate prediction of errors: {checker.accurate_of_error}')
+    print(f'# accurate prediction of non errors: {checker.total_predict_num - checker.accurate_of_error}')
+    print(f'Accuracy: {checker.accurate / checker.total_predict_num * 100:.2f}%')
+    print(f'Accuracy of errors: {checker.accurate_of_error / checker.total_error_num * 100:.2f}%')
+    print(f'Accuracy of non errors: {(checker.accurate - checker.accurate_of_error) / (checker.total_predict_num - checker.total_error_num) * 100:.2f}%')
+    print()
 
     error_num_dic = {}
     for _, error_num in checker.target_statistic:
@@ -43,17 +54,50 @@ def main():
             error_num_dic[error_num] += 1
         else:
             error_num_dic[error_num] = 1
-    print('[# error VS # sentence]')
+    print('[Num of error in a sentence]')
     for k, v in sorted(error_num_dic.items()):
-        print(f'\t{k}: {v}')
+        print(f'{k}: {v}', end='  ')
+    print()
 
-    print('\n[NAIST confusion matrix (error -> answer)]')
-    for k, v in sorted(checker.naist_confusion.items()):
-        print(f'\t{k}: {v}')
+    print('\n[confusion matrix (error -> answer)]')
+    print_confusion_matrix(checker.confusion_target_to_answer)
 
-    print('\n[Predict confusion matrix (error -> predict)]')
-    for k, v in sorted(checker.predict_confusion.items()):
-        print(f'\t{k}: {v}')
+    print('\n[confusion matrix (error -> predict)]')
+    print_confusion_matrix(checker.confusion_target_to_predict)
+
+    print('\n[confusion matrix (predict -> answer)]')
+    print_confusion_matrix(checker.confusion_predict_to_answer)
+
+
+def print_confusion_matrix(dic):
+    label = ['が', 'を', 'に', 'で']
+    sum_rows = {'が': 0, 'を': 0, 'に': 0, 'で': 0}
+    for k, v in dic.items():
+        sum_rows[k[0]] += v
+
+    # print('\t' + '\t'.join(label))
+    # print('--|' + '----'*10)
+    # for i in range(len(label)):
+    #     print(label[i] + '|', end='\t')
+    #     for j in range(len(label)):
+    #         try:
+    #             print(dic[f'{label[i]}->{label[j]}'], end='\t')
+    #         except KeyError:
+    #             print('0', end='\t')
+    #     print()
+    # print()
+
+    print('\t' + '\t'.join(label) + '\t(total row num)')
+    print('--|' + '----'*15)
+    for i in range(len(label)):
+        print(label[i] + '|', end='\t')
+        for j in range(len(label)):
+            try:
+                print(f'{dic[f"{label[i]}->{label[j]}"] / sum_rows[label[i]] * 100 :.2f}%', end='\t')
+            except KeyError:
+                print('0', end='\t')
+        print(sum_rows[label[i]])
+
 
 if __name__ == '__main__':
     main()

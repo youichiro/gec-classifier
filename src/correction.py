@@ -55,16 +55,16 @@ class Checker:
 
         # for test
         self.show = show
-        self.precision = 0
-        self.recall = 0
+        self.accurate = 0
+        self.accurate_of_error = 0
         self.total_predict_num = 0
         self.total_error_num = 0
         self.num_sentence = 0
         self.error = 0
         self.target_statistic = []
-        self.naist_confusion = {}
-        self.predict_confusion = {}
-        self.tp = self.tn = self.fp = self.fn = 0
+        self.confusion_target_to_answer = {}
+        self.confusion_target_to_predict = {}
+        self.confusion_predict_to_answer = {}
 
     def _preprocess(self, sentence):
         """正規化，形態素解析，カナ変換を行う"""
@@ -121,25 +121,28 @@ class Checker:
 
     def correction_test(self, err, ans):
         """訂正して正解率を求める"""
-        self.num_sentence += 1
+        # 前処理
         err_org_words, err_words, err_parts = self._preprocess(err)
         ans_org_words, ans_words, _ = self._preprocess(ans)
         if err_org_words is None or ans_org_words is None:
             return "error"
-
-        target_idx = self._get_target_positions(err_words, err_parts)
-        error_idx = [idx for idx in range(len(err_words) - 1) if err_words[idx] != ans_words[idx]]
         err_word_lens = [len(t) for t in err_words]
         ans_word_lens = [len(t) for t in ans_words]
-        self.total_error_num += len(error_idx)  # 間違い箇所数
+
+        # もし誤り文と正解文で単語分割の対応が異なったらエラーとする
         if err_word_lens != ans_word_lens:
-            print('error')
-            print(' '.join(err_words))
-            print(' '.join(ans_words))
-            print()
+            # print('error\n' + ' '.join(err_words) + '\n' + ' '.join(ans_words) + '\n')
             self.error += 1
             return ''.join(err_org_words)
+
+        self.num_sentence += 1
+        target_idx = self._get_target_positions(err_words, err_parts)  # 訂正対象の位置を取得
+        error_idx = [idx for idx in range(len(err_words) - 1) if err_words[idx] != ans_words[idx]]  # 誤り箇所の位置を取得
+        self.total_error_num += len(error_idx)  # 間違い箇所数
         self.total_predict_num += len(target_idx)  # 予測する箇所数
+
+        # 誤り箇所が訂正対象に全て含まれていることを保証
+        assert len(set(error_idx) - set(target_idx)) == 0
 
         # 後ろから訂正
         if self.reverse is True:
@@ -147,37 +150,48 @@ class Checker:
 
         predict_list = []
         for idx in target_idx:
-            origin_error = err_words[idx]
+            target = err_words[idx]  # target: 対象単語
             marked_sentence = '{} <{}> {}'.format(
                 ' '.join(err_words[:idx]), err_words[idx], ' '.join(err_words[idx+1:]))  # 格助詞を<>で囲む
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
                                         n_encoder=self.n_encoder, to_kana=self.to_kana)
-            predict, _ = self._predict(test_data)
+            predict, _ = self._predict(test_data)  # predict: 予測単語
             predict_list.append(predict)
             # 予測に置換
             err_words[idx] = predict
             err_org_words[idx] = predict
-            answer = ans_words[idx]
+            answer = ans_words[idx]  # answer: 正解単語
 
-            # count
             if predict == answer:
-                self.precision += 1  # 予測して，かつ正解
+                self.accurate += 1  # 予測して，かつ正解
                 if idx in error_idx:
-                    self.recall += 1  # 間違い箇所であり，かつ正解
+                    self.accurate_of_error += 1  # 間違い箇所であり，かつ正解
 
-            # NAIST confusion matrixを作成
-            cell = f'{origin_error}->{answer}'
-            if cell in self.naist_confusion.keys():
-                self.naist_confusion[cell] += 1
-            else:
-                self.naist_confusion[cell] = 1
+            # 誤り箇所である条件の上で
+            if idx in error_idx:
+                # confusion matrix (target -> answer) を作成
+                cell = f'{target}->{answer}'
+                if cell in self.confusion_target_to_answer.keys():
+                    self.confusion_target_to_answer[cell] += 1
+                else:
+                    self.confusion_target_to_answer[cell] = 1
 
-            # Predict confusion matrixを作成
-            cell = f'{origin_error}->{predict}'
-            if cell in self.predict_confusion.keys():
-                self.predict_confusion[cell] += 1
-            else:
-                self.predict_confusion[cell] = 1
+                # confusion matrix (target -> predict) を作成
+                cell = f'{target}->{predict}'
+                if cell in self.confusion_target_to_predict.keys():
+                    self.confusion_target_to_predict[cell] += 1
+                else:
+                    self.confusion_target_to_predict[cell] = 1
+
+                # confusion matrix (predict -> answer) を作成
+                cell = f'{predict}->{answer}'
+                if cell in self.confusion_predict_to_answer.keys():
+                    self.confusion_predict_to_answer[cell] += 1
+                else:
+                    self.confusion_predict_to_answer[cell] = 1
+
+        # [1文中の対象格助詞の数，格助詞誤りの数]
+        self.target_statistic.append([len(target_idx), len(error_idx)])
 
         corrected = ''.join(err_org_words)
         if self.show:
@@ -186,10 +200,6 @@ class Checker:
             print(f'ans: {ans}')
             print(f'out: {corrected}')
             print(f'Result: {ans == corrected}\n')
-
-        # [1文中の対象格助詞の数，格助詞誤りの数]
-        self.target_statistic.append([len(target_idx), len(error_idx)])
-
         return corrected
 
 

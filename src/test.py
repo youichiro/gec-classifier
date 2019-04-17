@@ -32,21 +32,29 @@ def test_on_pair_encoder(model, test, id2w, id2class, do_show):
 def test_on_single_encoder(model, test, id2w, id2class, do_show):
     if do_show:
         print('text\tanswer\tpredict\tresult')
-    count, t = 0, 0
+    total_predict, accurate = 0, 0
+    total_particles = {'が': 0, 'を': 0, 'に': 0, 'で': 0}
+    accurate_particles = {'が': 0, 'を': 0, 'に': 0, 'で': 0}
+
     for i in tqdm(range(len(test))):
         xs, ts = seq_convert([test[i]])
         with chainer.no_backprop_mode(), chainer.using_config('train', False):
             predict = model.predict(xs, argmax=True)
         text = ' '.join([id2w.get(int(idx), '<UNK>') for idx in xs[0]])
-        target = id2class.get(int(ts[0]))
+        answer = id2class.get(int(ts[0]))
         predict = id2class.get(int(predict[0]))
-        result = 1 if predict == target else 0
-        count += 1
-        t += result
-        if do_show:
-            print(f'{text}\t{target}\t{predict}\t{result}')
+        total_predict += 1
+        accurate += 1 if predict == answer else 0
 
-    print('\nAccuracy {:.2f}% ({}/{})'.format(t / count * 100, t, count))
+        # 格助詞別スコア
+        total_particles[answer] += 1
+        if is_correct:
+            accurate_particles[answer] += 1
+
+        if do_show:
+            print(f'{text}\t{answer}\t{predict}\t{predict == answer}')
+
+    print('\nAccuracy {:.2f}% ({}/{})'.format(accurate / total_predict * 100, accurate, total_predict))
 
 
 def load_model():
