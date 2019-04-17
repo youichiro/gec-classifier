@@ -33,7 +33,7 @@ def main():
     \n[Total]
     Precision: {precision:.5}% ({checker.precision}/{checker.total_predict_num})
     Recall: {recall:.5}% ({checker.recall}/{checker.total_error_num})
-    # sentence: {checker.n}
+    # sentence: {checker.num_sentence}
     # error: {checker.error}
     """)
 

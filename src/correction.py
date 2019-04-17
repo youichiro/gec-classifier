@@ -59,11 +59,12 @@ class Checker:
         self.recall = 0
         self.total_predict_num = 0
         self.total_error_num = 0
-        self.n = 0
-        self.target_statistic = []
+        self.num_sentence = 0
         self.error = 0
+        self.target_statistic = []
         self.naist_confusion = {}
         self.predict_confusion = {}
+        self.tp = self.tn = self.fp = self.fn = 0
 
     def _preprocess(self, sentence):
         """正規化，形態素解析，カナ変換を行う"""
@@ -120,7 +121,7 @@ class Checker:
 
     def correction_test(self, err, ans):
         """訂正して正解率を求める"""
-        self.n += 1
+        self.num_sentence += 1
         err_org_words, err_words, err_parts = self._preprocess(err)
         ans_org_words, ans_words, _ = self._preprocess(ans)
         if err_org_words is None or ans_org_words is None:
@@ -180,7 +181,7 @@ class Checker:
 
         corrected = ''.join(err_org_words)
         if self.show:
-            print(f'{self.n}')
+            print(f'{self.num_sentence}')
             print(f'err: {err}')
             print(f'ans: {ans}')
             print(f'out: {corrected}')
