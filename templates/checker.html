@@ -187,7 +187,7 @@
             // keyupされた時点で既にsendの実行が予約されていたら一旦削除
             clearTimeout(timeout_id);
         }
-        timeout_id = setTimeout(addItem, 500);  // 500ms後にajax
+        timeout_id = setTimeout(addItem, 100);  // 100ms後にajax
     });
 
     $("#check-btn").click(function () {
