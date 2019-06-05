@@ -13,7 +13,7 @@ from tqdm import tqdm
 import MeCab
 from utils import clean_text
 from mecab import Mecab
-
+from joblib import Parallel, delayed
 
 
 # TARGETS = ['が', 'を', 'に', 'で']
@@ -22,13 +22,36 @@ from mecab import Mecab
 TARGETS = ['が', 'を', 'の', 'に', 'から', 'と', 'で', 'へ', 'まで', 'より', 'は',
            'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'じゃ', 'とか', 'も', '']  # 削除も含める
 TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞', '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
+COUNT = 0
 
 
 def get_target_positions(words, parts):
+    """訂正対象箇所のインデックスを返す"""
     target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
                   if p in TARGET_PARTS and w in TARGETS \
                   and i != 0 and i != len(words) - 1]  # 文頭と文末の助詞は除く
     return target_idx
+
+
+def process(line, args):
+    line = clean_text(line.rstrip())  # 全角→半角，数字→#
+    words, parts = mecab.tagger(line)  # 形態素解析
+    words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
+    target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
+    n_target = len(target_idx)
+    if not n_target or len(words) > args.maxlen:
+        continue
+    elif n_target == 1:
+        target_id = target_idx[0]
+    else:
+        # 文中に複数対象がある場合はランダムに1箇所選ぶ
+        target_id = random.choice(target_idx)
+    marked_sentence = '{} <{}> {}'.format(
+        ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
+
+    save_path = args.save_valid if COUNT < args.valid_size else args.save_train
+    open(save_path, 'a').write(marked_sentence + '\n')
+    COUNT += 1
 
 
 def main():
@@ -50,25 +73,29 @@ def main():
 
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
-    for line in tqdm(lines):
-        line = clean_text(line.rstrip())  # 全角→半角，数字→#
-        words, parts = mecab.tagger(line)  # 形態素解析
-        words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
-        target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
-        n_target = len(target_idx)
-        if not n_target or len(words) > args.maxlen:
-            continue
-        elif n_target == 1:
-            target_id = target_idx[0]
-        else:
-            # 文中に複数対象がある場合はランダムに1箇所選ぶ
-            target_id = random.choice(target_idx)
-        marked_sentence = '{} <{}> {}'.format(
-            ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
 
-        save_path = args.save_valid if count < args.valid_size else args.save_train
-        open(save_path, 'a').write(marked_sentence + '\n')
-        count += 1
+    result = Parallel(n_jobs=-1)([delayed(process)(line, args) for line in tqdm(lines)])
+
+
+    # for line in tqdm(lines):
+    #     line = clean_text(line.rstrip())  # 全角→半角，数字→#
+    #     words, parts = mecab.tagger(line)  # 形態素解析
+    #     words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
+    #     target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
+    #     n_target = len(target_idx)
+    #     if not n_target or len(words) > args.maxlen:
+    #         continue
+    #     elif n_target == 1:
+    #         target_id = target_idx[0]
+    #     else:
+    #         # 文中に複数対象がある場合はランダムに1箇所選ぶ
+    #         target_id = random.choice(target_idx)
+    #     marked_sentence = '{} <{}> {}'.format(
+    #         ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
+
+    #     save_path = args.save_valid if count < args.valid_size else args.save_train
+    #     open(save_path, 'a').write(marked_sentence + '\n')
+    #     count += 1
 
 
 if __name__ == '__main__':
