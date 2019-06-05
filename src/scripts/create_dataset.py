@@ -33,14 +33,14 @@ def get_target_positions(words, parts):
     return target_idx
 
 
-def process(line, args):
+def process(line, mecab, args):
     line = clean_text(line.rstrip())  # 全角→半角，数字→#
     words, parts = mecab.tagger(line)  # 形態素解析
     words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
     target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
     n_target = len(target_idx)
     if not n_target or len(words) > args.maxlen:
-        continue
+        return
     elif n_target == 1:
         target_id = target_idx[0]
     else:
@@ -74,7 +74,7 @@ def main():
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
 
-    result = Parallel(n_jobs=-1)([delayed(process)(line, args) for line in tqdm(lines)])
+    result = Parallel(n_jobs=-1)([delayed(process)(line, mecab, args) for line in tqdm(lines)])
 
 
     # for line in tqdm(lines):
