@@ -33,7 +33,7 @@ class Mecab:
             if continue_flag:
                 continue_flag = False
                 continue
-            if p in target_parts and words[i] + words[i+1] in targets:
+            if i != len(words) - 1 and p in target_parts and words[i] + words[i+1] in targets:
                 new_words.append(words[i] + words[i+1])
                 new_parts.append('助詞')
                 continue_flag = True
