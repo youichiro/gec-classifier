@@ -12,7 +12,6 @@ IGNORE_ID = -1
 UNK_ID = 0
 split_regex = r'^(.*) <(.)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
-MECAB_DICT_PATH = '/tools/env/lib/mecab/dic/unidic'
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
 conv = kakasi.getConverter()
@@ -20,10 +19,10 @@ conv = kakasi.getConverter()
 
 def clean_text(text, to_kana=False):
     """全角→半角, 数字の正規化を行う"""
-    text = mojimoji.zen_to_han(text, kana=False)
-    text = digit_regex.sub('#', text)
+    text = mojimoji.zen_to_han(text, kana=False)  # 全角→半角
+    text = digit_regex.sub('#', text)  # 数字→#
     if to_kana:
-        text = conv.do(text)
+        text = conv.do(text)  # ひらがなに変換
     return text
 
 
