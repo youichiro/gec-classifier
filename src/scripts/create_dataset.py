@@ -3,13 +3,17 @@
 テキストからランダムに1つの格助詞を選択してマークする
 ex) 彼に車を預ける → 彼 に 車 <を> 預ける
 """
+import sys
 import os
+sys.path.append(os.pardir)
+
 import random
 import argparse
 from tqdm import tqdm
 import MeCab
-from ..utils import clean_text
-from ..mecab import Mecab
+from utils import clean_text
+from mecab import Mecab
+
 
 
 # TARGETS = ['が', 'を', 'に', 'で']
