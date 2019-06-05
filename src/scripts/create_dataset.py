@@ -49,9 +49,7 @@ def process(line, mecab, args):
     marked_sentence = '{} <{}> {}'.format(
         ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
 
-    save_path = args.save_valid if COUNT < args.valid_size else args.save_train
-    open(save_path, 'a').write(marked_sentence + '\n')
-    COUNT += 1
+    return marked_sentence
 
 
 def main():
@@ -74,7 +72,12 @@ def main():
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
 
-    result = Parallel(n_jobs=-1)([delayed(process)(line, mecab, args) for line in tqdm(lines)])
+    marked_sentences = Parallel(n_jobs=-1)([delayed(process)(line, mecab, args) for line in tqdm(lines)])
+    print(marked_sentences[:10])
+
+    # save_path = args.save_valid if COUNT < args.valid_size else args.save_train
+    # open(save_path, 'a').write(marked_sentence + '\n')
+    # COUNT += 1
 
 
     # for line in tqdm(lines):
