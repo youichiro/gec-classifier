@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 NAIST誤用コーパス中の助詞の誤りのみを抽出する
 出力中にまだ<goyo>タグがのこるので、手で直す
@@ -7,8 +8,8 @@ import argparse
 import MySQLdb
 
 # regex
-# target_tags = '(om|ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで不足
-target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
+# target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
+target_tags = '(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|om)/(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|ad)'  # 不足，余剰も含める
 target_tags_regex = r"<goyo crr='(.)' type='p\/{}'>(.*?)<\/goyo>".format(target_tags)
 tags_regex = r"<goyo crr='(.*?)'( .*?)>.*?<\/goyo>"
 some_tags_regex = r"<goyo crr1='(.*?)' crr2='(.*?)' (type|type1)='(?!p\/.*)(.*?)'( .*?)?>.*?<\/goyo>"
@@ -25,7 +26,8 @@ c = conn.cursor()
 
 def select_particle_errors():
     sql = """
-        SELECT annotated_sentence, correct_sentence FROM data 
+        SELECT annotated_sentence, correct_sentence
+        FROM data
         WHERE annotated_sentence RLIKE "type='p/{}'"
         AND correction_id=1
     """.format(target_tags)
@@ -41,10 +43,10 @@ def main():
     f_crr = open(args.save_crr, 'w')
     f_err = open(args.save_err, 'w')
 
-    result = select_particle_errors()
-    for r in result:
-        annotated_sent = r[0]
-        correct_sent = r[1]
+    particle_error_sentences = select_particle_errors()
+    for s in particle_error_sentences:
+        annotated_sent = s[0]
+        correct_sent = s[1]
         # 助詞だけ間違ったままにしてタグを削除
         target_sub_sent = re.sub(target_tags_regex, r'\4', annotated_sent)
         # 他の誤りを正しく置換してタグを削除
@@ -52,8 +54,9 @@ def main():
         tags_sub_sent = re.sub(some_tags_regex, r'\1', tags_sub_sent)
         error_sent = tags_sub_sent
 
-        if len(error_sent) != len(correct_sent):
-            continue
+        # if len(error_sent) != len(correct_sent):
+        #     continue
+        assert len(error_sent) == len(correct_sent)
 
         print(correct_sent, file=f_crr)
         print(error_sent, file=f_err)
