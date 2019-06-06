@@ -9,10 +9,11 @@ import MySQLdb
 
 # regex
 # target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
-target_tags = '(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|om)/(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|ad)'  # 不足，余剰も含める
-target_tags_regex = r"<goyo crr='(.)' type='p\/{}'>(.*?)<\/goyo>".format(target_tags)
-tags_regex = r"<goyo crr='(.*?)'( .*?)>.*?<\/goyo>"
+target_tag = '(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|om)/(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|ad)'  # 不足，余剰も含める
+target_tag_regex = r"<goyo crr='(.*?)' type='p\/{}'>(.*?)<\/goyo>".format(target_tag)
+goyo_tag_regex = r"<goyo crr='(.*?)'( .*?)>.*?<\/goyo>"
 some_tags_regex = r"<goyo crr1='(.*?)' crr2='(.*?)' (type|type1)='(?!p\/.*)(.*?)'( .*?)?>.*?<\/goyo>"
+valid_tag_regex = r"<goyo crr='' type='p\/om\/(.*?)'><\/goyo>"
 
 # mysql
 conn = MySQLdb.connect(
@@ -30,7 +31,7 @@ def select_particle_errors():
         FROM data
         WHERE annotated_sentence RLIKE "type='p/{}'"
         AND correction_id=1
-    """.format(target_tags)
+    """.format(target_tag)
     c.execute(sql)
     return c.fetchall()
 
@@ -44,22 +45,36 @@ def main():
     f_err = open(args.save_err, 'w')
 
     particle_error_sentences = select_particle_errors()
-    for s in particle_error_sentences:
-        annotated_sent = s[0]
-        correct_sent = s[1]
+    for s in particle_error_sentences[10:20]:
+        annotated_sentence = s[0]
+        correct_sentence = s[1]
+
+        # 不適切なタグを削除
+        annotated_sentence1 = re.sub(valid_tag_regex, r'', annotated_sentence)
         # 助詞だけ間違ったままにしてタグを削除
-        target_sub_sent = re.sub(target_tags_regex, r'\4', annotated_sent)
+        error_sentence1 = re.sub(target_tag_regex, r'\4', annotated_sentence1)
         # 他の誤りを正しく置換してタグを削除
-        tags_sub_sent = re.sub(tags_regex, r'\1', target_sub_sent)
-        tags_sub_sent = re.sub(some_tags_regex, r'\1', tags_sub_sent)
-        error_sent = tags_sub_sent
+        error_sentence = re.sub(goyo_tag_regex, r'\1', error_sentence1)
+        error_sentence = re.sub(some_tags_regex, r'\1', error_sentence)
 
-        # if len(error_sent) != len(correct_sent):
-        #     continue
-        assert len(error_sent) == len(correct_sent)
+        if error_sentence == correct_sentence:
+            print('Continued:')
+            print(error_sentence1)
+            print(error_sentence)
+            print(correct_sentence)
+            print()
+            continue
 
-        print(correct_sent, file=f_crr)
-        print(error_sent, file=f_err)
+        # check
+        print(annotated_sentence)
+        print(annotated_sentence1)
+        print(error_sentence1)
+        print(error_sentence)
+        print(correct_sentence)
+        print()
+
+        print(correct_sentence, file=f_crr)
+        print(error_sentence, file=f_err)
 
     f_crr.close()
     f_err.close()
