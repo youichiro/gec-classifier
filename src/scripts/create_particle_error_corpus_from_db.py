@@ -11,6 +11,7 @@ import MySQLdb
 # target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
 target_tag = '(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|om)/(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|ad)'  # 不足，余剰も含める
 target_tag_regex = r"<goyo crr='([^(<\/goyo>)]*?)' type='p\/{}'>(.*?)<\/goyo>".format(target_tag)
+target_multi_tag_regex = r"<goyo crr1='(.*?)' crr2='(.*?)' type1='p\/{}' type2='(.*?)'>(.*?)<\/goyo>".format(target_tag)
 goyo_tag_regex = r"<goyo crr='([^(<\/goyo>)]*?)'( .*?)>.*?<\/goyo>"
 some_tags_regex = r"<goyo crr1='(.*?)' crr2='(.*?)' (type|type1)='(?!p\/.*)(.*?)'( .*?)?>.*?<\/goyo>"
 valid_tag_regex = r"<goyo crr='' type='p\/om\/(.*?)'><\/goyo>"
@@ -43,35 +44,31 @@ def main():
     args = parser.parse_args()
     f_crr = open(args.save_crr, 'w')
     f_err = open(args.save_err, 'w')
+    continue_count = 0
 
     particle_error_sentences = select_particle_errors()
-    for s in particle_error_sentences[10:20]:
+    for s in particle_error_sentences:
         annotated_sentence = s[0]
         correct_sentence = s[1]
 
         # 不適切なタグを削除
-        annotated_sentence1 = re.sub(valid_tag_regex, r'', annotated_sentence)
+        annotated_sentence = re.sub(valid_tag_regex, r'', annotated_sentence)
         # 助詞だけ間違ったままにしてタグを削除
-        error_sentence1 = re.sub(target_tag_regex, r'\4', annotated_sentence1)
+        error_sentence = re.sub(target_tag_regex, r'\4', annotated_sentence)
+        error_sentence = re.sub(target_multi_tag_regex, r'\6', error_sentence)
         # 他の誤りを正しく置換してタグを削除
-        error_sentence = re.sub(goyo_tag_regex, r'\1', error_sentence1)
+        error_sentence = re.sub(goyo_tag_regex, r'\1', error_sentence)
         error_sentence = re.sub(some_tags_regex, r'\1', error_sentence)
 
-        if error_sentence == correct_sentence:
-            print('Continued:')
-            print(error_sentence1)
-            print(error_sentence)
-            print(correct_sentence)
+        if error_sentence == correct_sentence \
+          or abs(len(error_sentence) - len(correct_sentence)) > 3:
+            continue_count += 1
+            print('Continued: ' + str(continue_count))
+            print('[annotated_sentence]\n' + annotated_sentence)
+            print('[error_sentence]\n' + error_sentence)
+            print('[correct_sentence]\n' + correct_sentence)
             print()
             continue
-
-        # check
-        print(annotated_sentence)
-        print(annotated_sentence1)
-        print(error_sentence1)
-        print(error_sentence)
-        print(correct_sentence)
-        print()
 
         print(correct_sentence, file=f_crr)
         print(error_sentence, file=f_err)
