@@ -10,8 +10,8 @@ import MySQLdb
 # regex
 # target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
 target_tag = '(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|om)/(ga|no|wo|ni|he|to|yori|kara|de|ya|wa|niwa|karawa|towa|dewa|hewa|madewa|yoriwa|made|ad)'  # 不足，余剰も含める
-target_tag_regex = r"<goyo crr='(.*?)' type='p\/{}'>(.*?)<\/goyo>".format(target_tag)
-goyo_tag_regex = r"<goyo crr='(.*?)'( .*?)>.*?<\/goyo>"
+target_tag_regex = r"<goyo crr='([^(<\/goyo>)]*?)' type='p\/{}'>(.*?)<\/goyo>".format(target_tag)
+goyo_tag_regex = r"<goyo crr='([^(<\/goyo>)]*?)'( .*?)>.*?<\/goyo>"
 some_tags_regex = r"<goyo crr1='(.*?)' crr2='(.*?)' (type|type1)='(?!p\/.*)(.*?)'( .*?)?>.*?<\/goyo>"
 valid_tag_regex = r"<goyo crr='' type='p\/om\/(.*?)'><\/goyo>"
 
