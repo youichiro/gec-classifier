@@ -79,6 +79,7 @@ def get_pretrained_emb(emb_path, vocab_size, to_kana):
         n += 1
 
     # w2idの作成
+    # TODO: "よりは" = "より" + "は" のようにベクトルを作る
     w2id['<UNK>'] = UNK_ID
     w2id['<TARGET>'] = len(w2id)
     # Wの作成
