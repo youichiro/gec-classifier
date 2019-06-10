@@ -4,6 +4,7 @@ import numpy
 import random
 import neologdn
 import emoji
+import regex
 from tqdm import tqdm
 from collections import Counter
 from pykakasi import kakasi
