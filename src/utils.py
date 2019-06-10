@@ -10,7 +10,7 @@ from pykakasi import kakasi
 
 IGNORE_ID = -1
 UNK_ID = 0
-split_regex = r'^(.*) <(.*?)> (.*)$'
+split_regex = r'^(.*) <([^>]*?)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
@@ -104,7 +104,7 @@ def make_target_array(target, class2id):
 def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
-    for line in lines:
+    for line in tqdm(lines):
         m = re.match(split_regex, line.replace('\n', ''))
         if not m:
             continue
