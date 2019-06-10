@@ -14,7 +14,7 @@ TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助
 
 
 class Checker:
-    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, reverse=False)
+    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, reverse=False):
         # mecab
         self.mecab = Mecab(mecab_dict_file)
 
@@ -103,7 +103,7 @@ class Checker:
 
         for idx in target_idx:
             marked_sentence = '{} <{}> {}'.format(
-                ' '.join(words[:idx], words[idx], ' '.join(words[idx+1:]))  # 訂正対象を<>で囲む
+                ' '.join(words[:idx]), words[idx], ' '.join(words[idx+1:])  # 訂正対象を<>で囲む
             )
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
                                         n_encoder=self.n_encoder, to_kana=self.to_kana)

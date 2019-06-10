@@ -10,7 +10,7 @@ def main():
     parser.add_argument('--epoch', required=True, help='Model epoch')
     parser.add_argument('--err', required=True, help='Error corpus')
     parser.add_argument('--ans', required=True, help='Answer corpus')
-    parser.add_argument('--reverse', defalut=False, action='atore_true',
+    parser.add_argument('--reverse', default=False, action='store_true',
                         help='Whether to reverse the prediction order')
     args = parser.parse_args()
 
@@ -33,3 +33,8 @@ def main():
         print(f'hyp: {hyp}')
         print(f'ans: {ans}')
         print()
+
+
+if __name__ == '__main__':
+    main()
+

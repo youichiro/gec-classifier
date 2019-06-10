@@ -39,10 +39,10 @@ def select_particle_errors():
 
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--save-crr', required=True, help='Save file for correct sentences')
+    parser.add_argument('--save-ans', required=True, help='Save file for correct sentences')
     parser.add_argument('--save-err', required=True, help='Save file for error sentences')
     args = parser.parse_args()
-    f_crr = open(args.save_crr, 'w')
+    f_ans = open(args.save_ans, 'w')
     f_err = open(args.save_err, 'w')
     continue_count = 0
 
@@ -70,10 +70,10 @@ def main():
             print()
             continue
 
-        print(correct_sentence, file=f_crr)
+        print(correct_sentence, file=f_ans)
         print(error_sentence, file=f_err)
 
-    f_crr.close()
+    f_ans.close()
     f_err.close()
 
 if __name__ == '__main__':
