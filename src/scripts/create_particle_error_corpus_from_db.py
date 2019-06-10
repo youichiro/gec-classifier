@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 NAIST誤用コーパス中の助詞の誤りのみを抽出する
-出力中にまだ<goyo>タグがのこるので、手で直す
 """
+import sys
+import os
+sys.path.append(os.pardir)
+
 import re
 import argparse
 import MySQLdb
+from utils import clean_text
 
 # regex
 # target_tags = '(ga|wo|ni|de)/(ga|wo|ni|de)'  # がをにで
@@ -59,6 +63,9 @@ def main():
         # 他の誤りを正しく置換してタグを削除
         error_sentence = re.sub(goyo_tag_regex, r'\1', error_sentence)
         error_sentence = re.sub(some_tags_regex, r'\1', error_sentence)
+        # クリーニング
+        correct_sentence = clean_text(correct_sentence)
+        error_sentence = clean_text(error_sentence)
 
         if error_sentence == correct_sentence \
           or abs(len(error_sentence) - len(correct_sentence)) > 3:

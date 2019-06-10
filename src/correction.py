@@ -4,7 +4,7 @@ import argparse
 import chainer
 from nets import CNNEncoder, Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
-from utils import make_dataset, normalize_text, convert_to_kana
+from utils import make_dataset, clean_text, convert_to_kana
 from train import seq_convert
 
 
@@ -68,7 +68,7 @@ class Checker:
 
     def _preprocess(self, sentence):
         """正規化，形態素解析，カナ変換を行う"""
-        sentence = normalize_text(sentence)  # 全角→半角，数字→#
+        sentence = clean_text(sentence)  # クリーニング
         org_words, parts = self.mecab.tagger(sentence)  # 形態素解析
         if self.to_kana:
             words = convert_to_kana(' '.join(org_words)).split(' ')  # カナ変換
@@ -205,7 +205,7 @@ class Checker:
 
     def correction_for_api(self, sentence):
         """チェッカー用の訂正結果を返す"""
-        sentence = normalize_text(sentence)  # 全角→半角，数字→#
+        sentence = clean_text(sentence)  # 全角→半角，数字→#
         org_words, parts = self.mecab.tagger(sentence)  # 形態素解析
         if self.to_kana:
             words = convert_to_kana(' '.join(org_words)).split(' ')  # カナ変換

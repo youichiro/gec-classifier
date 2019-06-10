@@ -11,7 +11,7 @@ import random
 import argparse
 from tqdm import tqdm
 import MeCab
-from utils import clean_text
+from utils import preprocess_text
 from mecab import Mecab
 
 
@@ -51,7 +51,7 @@ def main():
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
     for line in tqdm(lines):
-        line = clean_text(line.rstrip())  # 全角→半角，数字→#
+        line = clean_text(line.rstrip())  # クリーニング
         words, parts = mecab.tagger(line)  # 形態素解析
         words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
         target_idx = get_target_positions(words, parts)  # 助詞の位置を検出

@@ -3,7 +3,7 @@ import json
 import chainer
 from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
-from utils import make_dataset, normalize_text, convert_to_kana
+from utils import make_dataset, clean_text, convert_to_kana
 from train import seq_convert
 
 
@@ -58,7 +58,7 @@ class Checker:
 
     def _preprocess(self, text):
         """正規化，形態素解析，かな変換を行う"""
-        text = normalize_text(text)  # 全角→半角，数字→#
+        text = clean_text(text)  # 全角→半角，数字→#
         org_words, parts = self.mecab.tagger(text)
         org_words, parts = self.mecab.preprocessing_to_particle(org_words, parts, TARGETS, TARGET_PARTS)
 

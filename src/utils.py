@@ -10,26 +10,42 @@ from pykakasi import kakasi
 
 IGNORE_ID = -1
 UNK_ID = 0
-split_regex = r'^(.*) <([^>]*?)> (.*)$'
+split_regex = r'^(.*) <([がのをにへとよりからでやはにま]*?)> (.*)$'
 digit_regex = re.compile(r'(\d( \d)*)+')
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
 conv = kakasi.getConverter()
 
 
-def clean_text(text, to_kana=False):
-    """全角→半角, 数字の正規化を行う"""
-    text = mojimoji.zen_to_han(text, kana=False)  # 全角→半角
-    text = digit_regex.sub('#', text)  # 数字→#
+def preprocess_text(text, to_kana=False):
+    """クリーニング，かな変換を行う"""
+    text = clean_text(text)
     if to_kana:
         text = conv.do(text)  # ひらがなに変換
     return text
 
 
-def normalize_text(text):
-    """全角→半角, 数字の正規化を行う"""
-    text = mojimoji.zen_to_han(text, kana=False)
-    text = digit_regex.sub('#', text)
+def clean_text(text):
+    """テキストのクリーニング"""
+    # 全角スペース\u3000をスペースに変換
+    text.replace('\u3000', ' ')
+    # 全角→半角，重ね表現の除去
+    text = neologdn.normalize(text, repeat=3)
+    # 絵文字を削除
+    text = ''.join(['' if c in emoji.UNICODE_EMOJI else c for c in text])
+    # 桁区切りの除去と数字の置換
+    text = re.sub(r'(\d)([,.])(\d+)', r'\1\3', text)
+    text = re.sub(r'\d+', '0', text)
+    # 半角記号の置換
+    text = re.sub(r'[!-/:-@[-`{-~]', r' ', text)
+    # 全角記号の置換 (ここでは0x25A0 - 0x266Fのブロックのみを除去)
+    text = re.sub(u'[■-♯]', ' ', text)
+    # 文頭の「数字列+スペース」を削除
+    text = regex.sub(r'^(\p{Nd}+\p{Zs})(.*)$', r'\2', text)
+    # 文頭行末の空白は削除
+    text = text.strip()
+    # 複数の空白を1つにまとめる
+    text = re.sub(r'\s+', ' ', text)
     return text
 
 
@@ -110,8 +126,8 @@ def split_text(lines, to_kana):
         if not m:
             continue
         left_text, target, right_text = m.groups()
-        left_words.append(clean_text(left_text, to_kana).split())
-        right_words.append(clean_text(right_text, to_kana).split())
+        left_words.append(preprocess_text(left_text, to_kana).split())
+        right_words.append(preprocess_text(right_text, to_kana).split())
         targets.append(target)
     return left_words, right_words, targets
 
