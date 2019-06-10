@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
-import mojimoji
 import numpy
 import random
+import neologdn
+import emoji
 from tqdm import tqdm
 from collections import Counter
 from pykakasi import kakasi
