@@ -131,6 +131,9 @@ def split_text(lines, to_kana):
         # left_text, target, right_text = m.groups()
         line = line.replace('\n', '')
         search = split_regex.search(line)
+        if search is None:
+            print(line)
+            continue
         target = search.group()[1:-1]
         right_text = line[:search.start()]
         left_text = line[search.end():]
