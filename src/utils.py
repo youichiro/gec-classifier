@@ -8,11 +8,12 @@ import regex
 from tqdm import tqdm
 from collections import Counter
 from pykakasi import kakasi
+from joblib import Parallel, delayed
 
 
 IGNORE_ID = -1
 UNK_ID = 0
-split_regex = r'<([がのをにへとよりからでやはにま]{1,4})>'
+split_regex = r'<[がのをにへとよりからでやはにま]{1,4}>'
 split_regex = re.compile(split_regex)
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
@@ -155,7 +156,8 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
-    left_words, right_words, targets = split_text(lines, to_kana)
+    left_words, right_words, targets = Parallel(n_jobs=4)(delayed(split_text)(lines, to_kana))
+    # left_words, right_words, targets = split_text(lines, to_kana)
     initialW = None
 
     if not w2id or not class2id:
