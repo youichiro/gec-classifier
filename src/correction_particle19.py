@@ -106,7 +106,7 @@ class Checker:
                 ' '.join(words[:idx]), words[idx], ' '.join(words[idx+1:])  # 訂正対象を<>で囲む
             )
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
-                                        n_encoder=self.n_encoder, to_kana=self.to_kana)
+                                        n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
             predict, _ = self._predict(test_data)
             words[idx] = predict
             org_words[idx] = predict
