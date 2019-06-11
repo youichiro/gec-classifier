@@ -12,8 +12,8 @@ from pykakasi import kakasi
 
 IGNORE_ID = -1
 UNK_ID = 0
-split_regex = r'^(.*) <([がのをにへとよりからでやはにま]*?)> (.*)$'
-digit_regex = re.compile(r'(\d( \d)*)+')
+split_regex = r'^(.*) <([がのをにへとよりからでやはにま]{1,4})> (.*)$'
+split_regex = re.compile(split_regex)
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
 conv = kakasi.getConverter()
@@ -123,17 +123,14 @@ def make_target_array(target, class2id):
 def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
-    left_words_append = left_words.append
-    right_words_append = right_words.append
-    targets_append = targets.append
     for line in tqdm(lines):
-        m = re.match(split_regex, line.replace('\n', ''))
+        m = split_regex(line.replace('\n', ''))
         if not m:
             continue
         left_text, target, right_text = m.groups()
-        left_words_append(preprocess_text(left_text, to_kana).split())
-        right_words_append(preprocess_text(right_text, to_kana).split())
-        targets_append(target)
+        left_words.append(preprocess_text(left_text, to_kana).split())
+        right_words.append(preprocess_text(right_text, to_kana).split())
+        targets.append(target)
     return left_words, right_words, targets
 
 
