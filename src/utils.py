@@ -12,7 +12,6 @@ from pykakasi import kakasi
 
 IGNORE_ID = -1
 UNK_ID = 0
-split_regex = r'^(.*) <([がのをにへとよりからでやはにま]{1,4})> (.*)$'
 split_regex = r'<([がのをにへとよりからでやはにま]{1,4})>'
 split_regex = re.compile(split_regex)
 kakasi = kakasi()
@@ -74,6 +73,7 @@ def get_class(targets):
     class2id = {t: i for i, t in enumerate(targets)}
     return class2id
 
+
 def get_pretrained_emb(emb_path, vocab_size, to_kana):
     """Pretrained word embeddingsファイルから辞書w2id, 重みWを取得する"""
     lines = open(emb_path).readlines()
@@ -81,7 +81,7 @@ def get_pretrained_emb(emb_path, vocab_size, to_kana):
     w2id = {}
     params = []
     n = 1
-    for i, line in enumerate(tqdm(lines)):
+    for i, line in enumerate(lines):
         split = line.replace('\n', '').split(' ')
         word = split[0]
         vec = split[1:-1]
@@ -125,14 +125,9 @@ def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
-        # m = split_regex.match(line.replace('\n', ''))
-        # if not m:
-        #     continue
-        # left_text, target, right_text = m.groups()
         line = line.replace('\n', '')
         search = split_regex.search(line)
         if search is None:
-            print(line)
             continue
         target = search.group()[1:-1]
         right_text = line[:search.start()]
