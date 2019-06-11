@@ -20,11 +20,13 @@ kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
 conv = kakasi.getConverter()
 
 
-def preprocess_text(text, to_kana=False):
+def preprocess_text(text, to_kana=False, do_split=False):
     """クリーニング，かな変換を行う"""
     text = clean_text(text)
     if to_kana:
         text = conv.do(text)  # ひらがなに変換
+    if do_split:
+        text = text.split()
     return text
 
 
@@ -168,14 +170,15 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     splited_lines = Parallel(n_jobs=-1)([delayed(split_text2)(line, to_kana) for line in tqdm(lines)])
-    left_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[0], to_kana) for line in tqdm(splited_lines) if line[0] is not None])
-    targets = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[1], to_kana) for line in tqdm(splited_lines) if line[1] is not None])
-    right_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[2], to_kana) for line in tqdm(splited_lines) if line[2] is not None])
+
+    left_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
+    targets = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[1], to_kana, do_split=True) for line in tqdm(splited_lines) if line[1] is not None])
+    right_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None])
 
     # left_words = [preprocess_text(line[0], to_kana).split() for line in tqdm(splited_lines) if line[0] is not None]
     # targets = [preprocess_text(line[1], to_kana).split() for line in tqdm(splited_lines) if line[1] is not None]
     # right_words = [preprocess_text(line[2], to_kana).split() for line in tqdm(splited_lines) if line[2] is not None]
-    print(left_words)
+    print(left_words[:10])
     # left_words, right_words, targets = split_text(lines, to_kana)
     initialW = None
 
