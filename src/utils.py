@@ -124,7 +124,7 @@ def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
-        m = split_regex(line.replace('\n', ''))
+        m = split_regex.match(line.replace('\n', ''))
         if not m:
             continue
         left_text, target, right_text = m.groups()
