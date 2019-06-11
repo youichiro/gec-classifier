@@ -13,7 +13,7 @@ from pykakasi import kakasi
 IGNORE_ID = -1
 UNK_ID = 0
 split_regex = r'^(.*) <([がのをにへとよりからでやはにま]{1,4})> (.*)$'
-split_regex = r'^<([がのをにへとよりからでやはにま]{1,4})>'
+split_regex = r'<([がのをにへとよりからでやはにま]{1,4})>'
 split_regex = re.compile(split_regex)
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
