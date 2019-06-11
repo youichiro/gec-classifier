@@ -144,7 +144,7 @@ def split_text2(line, to_kana):
     line = line.replace('\n', '')
     search = split_regex.search(line)
     if search is None:
-        continue
+        return None, None, None
     target = search.group()[1:-1]
     left_text = line[:search.start()]
     right_text = line[search.end():]
@@ -168,9 +168,9 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     splited_lines = Parallel(n_jobs=4)([delayed(split_text)(line, to_kana) for line in lines])
-    left_words = [line[0] for line in splited_lines]
-    targets = [line[1] for line in splited_lines]
-    right_words = [line[2] for line in splited_lines]
+    left_words = [line[0] for line in splited_lines if line[0] is not None]
+    targets = [line[1] for line in splited_lines if line[1] is not None]
+    right_words = [line[2] for line in splited_lines if line[2] is not None]
     # left_words, right_words, targets = split_text(lines, to_kana)
     initialW = None
 
