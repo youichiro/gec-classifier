@@ -168,9 +168,9 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
     splited_lines = Parallel(n_jobs=-1)([delayed(split_text2)(line, to_kana) for line in tqdm(lines)])
-    left_words = [line[0] for line in splited_lines if line[0] is not None]
-    targets = [line[1] for line in splited_lines if line[1] is not None]
-    right_words = [line[2] for line in splited_lines if line[2] is not None]
+    left_words = [line[0] for line in tqdm(splited_lines) if line[0] is not None]
+    targets = [line[1] for line in tqdm(splited_lines) if line[1] is not None]
+    right_words = [line[2] for line in tqdm(splited_lines) if line[2] is not None]
     # left_words, right_words, targets = split_text(lines, to_kana)
     initialW = None
 
