@@ -13,6 +13,7 @@ from pykakasi import kakasi
 IGNORE_ID = -1
 UNK_ID = 0
 split_regex = r'^(.*) <([がのをにへとよりからでやはにま]{1,4})> (.*)$'
+split_regex = r'^<([がのをにへとよりからでやはにま]{1,4})>'
 split_regex = re.compile(split_regex)
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
@@ -124,10 +125,16 @@ def split_text(lines, to_kana):
     """左文脈, 右文脈, 対象単語に分割する"""
     left_words, right_words, targets = [], [], []
     for line in tqdm(lines):
-        m = split_regex.match(line.replace('\n', ''))
-        if not m:
-            continue
-        left_text, target, right_text = m.groups()
+        # m = split_regex.match(line.replace('\n', ''))
+        # if not m:
+        #     continue
+        # left_text, target, right_text = m.groups()
+        line = line.replace('\n', '')
+        search = split_regex.search(line)
+        target = search.group()[1:-1]
+        right_text = line[:search.start()]
+        left_text = line[search.end():]
+
         left_words.append(preprocess_text(left_text, to_kana).split())
         right_words.append(preprocess_text(right_text, to_kana).split())
         targets.append(target)
