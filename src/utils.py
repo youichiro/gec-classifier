@@ -124,25 +124,8 @@ def make_target_array(target, class2id):
     return numpy.array([class2id[target]], numpy.int32)
 
 
-def split_text(lines, to_kana):
-    """左文脈, 右文脈, 対象単語に分割する"""
-    left_words, right_words, targets = [], [], []
-    for line in tqdm(lines):
-        line = line.replace('\n', '')
-        search = split_regex.search(line)
-        if search is None:
-            continue
-        target = search.group()[1:-1]
-        right_text = line[:search.start()]
-        left_text = line[search.end():]
-
-        left_words.append(preprocess_text(left_text, to_kana).split())
-        right_words.append(preprocess_text(right_text, to_kana).split())
-        targets.append(target)
-    return left_words, right_words, targets
-
-
-def split_text2(line, to_kana):
+def split_text(line, to_kana):
+    """左文脈，対象単語，右文脈に分割する"""
     line = line.replace('\n', '')
     search = split_regex.search(line)
     if search is None:
@@ -169,17 +152,13 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         lines = path_or_data
     else:
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
-    splited_lines = Parallel(n_jobs=-1)([delayed(split_text2)(line, to_kana) for line in tqdm(lines)])
 
+    # 左文脈，対象単語，右文脈に分割する
+    splited_lines = Parallel(n_jobs=-1)([delayed(split_text)(line, to_kana) for line in tqdm(lines)])
     left_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
     targets = [line[1] for line in tqdm(splited_lines) if line[1] is not None]
     right_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None])
 
-    # left_words = [preprocess_text(line[0], to_kana).split() for line in tqdm(splited_lines) if line[0] is not None]
-    # targets = [preprocess_text(line[1], to_kana).split() for line in tqdm(splited_lines) if line[1] is not None]
-    # right_words = [preprocess_text(line[2], to_kana).split() for line in tqdm(splited_lines) if line[2] is not None]
-    print(left_words[:10])
-    # left_words, right_words, targets = split_text(lines, to_kana)
     initialW = None
 
     if not w2id or not class2id:
