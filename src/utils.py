@@ -35,7 +35,7 @@ def clean_text(text):
     # 全角スペース\u3000をスペースに変換
     text.replace('\u3000', ' ')
     # 全角→半角，重ね表現の除去
-    text = neologdn.normalize(text, repeat=3)
+    # text = neologdn.normalize(text, repeat=3)  # スペースを削除したくないのでコメントアウト
     # 絵文字を削除
     text = ''.join(['' if c in emoji.UNICODE_EMOJI else c for c in text])
     # 桁区切りの除去と数字の置換
