@@ -173,7 +173,7 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
 
     left_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
     targets = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[1], to_kana, do_split=True) for line in tqdm(splited_lines) if line[1] is not None])
-    right_words = [line[2] for line in tqdm(splited_lines) if line[2] is not None])
+    right_words = [line[2] for line in tqdm(splited_lines) if line[2] is not None]
 
     # left_words = [preprocess_text(line[0], to_kana).split() for line in tqdm(splited_lines) if line[0] is not None]
     # targets = [preprocess_text(line[1], to_kana).split() for line in tqdm(splited_lines) if line[1] is not None]
