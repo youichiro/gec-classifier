@@ -61,8 +61,8 @@ def main():
         f_hyp_char.close()
 
     # m2scoreを実行
-    call = ["python", "/lab/ogawa/tools/m2score/m2score", save_file_char, f"{args.save_dir}/naist_test19_char.m2"]
-    call_outut = subprocess.check_output(call, shell=True)
+    call = f"python /lab/ogawa/tools/m2score/m2score {save_file_char} {args.save_dir}/naist_test19_char.m2"
+    call_output = subprocess.check_output(call.split(), shell=True)
     print(call_output)
 
 
