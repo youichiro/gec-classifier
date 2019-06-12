@@ -41,7 +41,7 @@ def main():
         target_idx = get_target_positions(words, parts)
 
         for target_id in target_idx:
-            counter[[parts[target_id-1], parts[target_id]]]
+            counter[f'{parts[target_id-1]}:{parts[target_id]}']
             out = f'{words[target_id-1]}:{parts[target_id-1]} {words[target_id]}:{parts[target_id]}\n'
             f_out.write(out)
 
