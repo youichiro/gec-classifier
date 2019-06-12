@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--ans', required=True, help='Answer corpus')
     parser.add_argument('--reverse', default=False, action='store_true',
                         help='Whether to reverse the prediction order')
-    parser.add_argument('--show', default=False, help='Whether to show results')
+    parser.add_argument('--show', default=False, action='store_true', help='Whether to show results')
     parser.add_argument('--save-dir', default='results/v2', help='Save directory')
     args = parser.parse_args()
 
