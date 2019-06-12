@@ -86,7 +86,7 @@ def main():
         else:
             # 文中に複数対象がある場合はランダムに1箇所選ぶ
             # 削除ラベルをX%の確率で作成する
-            if random.random() < args.del_rate:
+            if random.random() < float(args.del_rate):
                 target_id = random.choice(del_idx)
             else:
                 target_id = random.choice(target_idx)
