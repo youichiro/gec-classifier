@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import argparse
+import subprocess
 from tqdm import tqdm
 from correction_particle19 import Checker
 
@@ -31,6 +32,8 @@ def main():
         os.makedirs(save_dir, exist_ok=True)
         save_file = save_dir + '/model.hyp'
         f_hyp = open(save_file, 'w')
+        save_file_char = save_dir + '/model_char.hyp'
+        f_hyp_char = open(save_file_char, 'w')
 
     if not args.show:
         error_data = tqdm(error_data)
@@ -49,10 +52,19 @@ def main():
 
         if args.save_dir:
             f_hyp.write(hyp + '\n')
+            f_hyp_char.write(' '.join(hyp) + '\n')
 
     if args.save_dir:
         print('Saved to ' + save_file)
+        print('Saved to ' + save_file_char)
         f_hyp.close()
+        f_hyp_char.close()
+
+    # m2scoreを実行
+    call = f"python /lab/ogawa/tools/m2score/m2score {save_file_char} {args.save_dir}/naist_test19_char.m2"
+    call_output = subprocess.check_output(call, shell=True)
+    print(call_output)
+
 
 if __name__ == '__main__':
     main()
