@@ -47,7 +47,7 @@ def main():
 
     counter = Counter(part_pair_list)
     for k, v in counter.most_common():
-        f_dic.write(f'{k}\t{v}\n')
+        f_dic.write(f'{v}\t{k}\n')
 
     f_out.close()
     f_dic.close()
