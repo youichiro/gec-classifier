@@ -14,7 +14,7 @@ import argparse
 from tqdm import tqdm
 from joblib import Parallel, delayed
 from utils import clean_text
-from mecab import Mecab
+from mecab import Mecab, clean_and_tag
 
 
 # TARGETS = ['が', 'を', 'に', 'で']
@@ -70,13 +70,11 @@ def main():
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
 
-    # 形態素解析を並列処理で
-    mecab_lines = Parallel(n_jobs=-1)([delayed(mecab.tagger)(clean_text(line.rstrip())) for line in tqdm(lines)])
+    mecab_lines = Parallel(n_jobs=-1)([delayed(clean_and_tag)(line, args.mecab_dic) for line in tqdm(lines)])
 
-    # for line in tqdm(lines):
-    #     line = clean_text(line.rstrip())  # クリーニング
-    #     words, parts = mecab.tagger(line)  # 形態素解析
     for words, parts in tqdm(mecab_lines):
+        # line = clean_text(line.rstrip())  # クリーニング
+        # words, parts = mecab.tagger(line)  # 形態素解析
         words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
         target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
         del_idx = get_del_positions(words, parts)  # 削除ラベルを挿入する位置を検出

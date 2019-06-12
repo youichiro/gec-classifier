@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import MeCab
+from utils import clean_text
 
 
 class Mecab:
@@ -41,3 +42,20 @@ class Mecab:
                 new_words.append(w)
                 new_parts.append(p)
         return new_words, new_parts
+
+
+def tagger(text, dict_path):
+    t = MeCab.Tagger('-d {}'.format(dict_path))
+    n = t.parse(text)
+    lines = n.split('\n')
+    words, parts = [], []
+    for line in lines[:-2]:
+        words.append(line.split('\t')[0])
+        parts.append(line.split('\t')[4])
+    return words, parts
+
+
+def clean_and_tag(text, dict_path):
+    text = clean_text(text.replace('\n', ''))
+    words, parts = tagger(text, dict_path)
+    return words, parts
