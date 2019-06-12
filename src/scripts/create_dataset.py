@@ -73,18 +73,22 @@ def main():
         words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
         target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
         del_idx = get_del_positions(words, parts)  # 削除ラベルを挿入する位置を検出
-
-        all_idx = target_idx + del_idx  # 助詞の位置と削除ラベルの挿入位置を結合したリスト
-        n_target = len(all_idx)
+        n_target = len(target_idx) + len(del_idx)
 
         # ラベル付けする位置を決める
-        if not n_target or len(words) > args.maxlen:
+        if n_target == 0 or len(words) > args.maxlen:
             continue
-        elif n_target == 1:
-            target_id = all_idx[0]
+        elif len(target_ids) == 0:
+            target_id = random.choice(del_idx)
+        elif len(target_idx) == 0:
+            target_id = random.choice(target_idx)
         else:
             # 文中に複数対象がある場合はランダムに1箇所選ぶ
-            target_id = random.choice(all_idx)
+            # 削除ラベルを10%の確率で作成する
+            if random.random() < 0.1:
+                target_idx = random.choice(del_idx)
+            else:
+                target_idx = random.choice(target_idx)
 
         # ラベル付け
         if parts[target_id][:2] == '助詞' or parts[target_id] == '助動詞':
