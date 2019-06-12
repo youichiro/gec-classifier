@@ -56,6 +56,6 @@ def tagger(text, dict_path):
 
 
 def clean_and_tag(text, dict_path):
-    text = clean_text(text.replace('\n', ''))
+    text = clean_text(text)
     words, parts = tagger(text, dict_path)
     return words, parts

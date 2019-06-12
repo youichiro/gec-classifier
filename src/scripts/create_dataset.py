@@ -49,8 +49,9 @@ def get_del_positions(words, parts):
     return del_idx
 
 
-def make_labeled_sentence(text, args):
-    line = clean_text(line.rstrip())  # クリーニング
+def make_labeled_sentence(line, args):
+    """テキストからラベル付けを行う箇所を決定し，ラベル付けした文を返す"""
+    line = clean_text(line)  # クリーニング
     words, parts = mecab.tagger(line)  # 形態素解析
     words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
     target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
@@ -108,6 +109,7 @@ def main():
     labeled_data = Parallel(n_jobs=-1)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
     labeled_data = [s for s in labeled_data if s is not None]
 
+    print('Saving ...')
     with open(args.save_valid, 'w') as f:
         for s in labeled_data[:args.valid_size]:
             f.write(s + '\n')

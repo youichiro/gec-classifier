@@ -32,8 +32,10 @@ def preprocess_text(text, to_kana=False, do_split=False):
 
 def clean_text(text):
     """テキストのクリーニング"""
+    # 改行を削除
+    text = text.replace('\n', '')
     # 全角スペース\u3000をスペースに変換
-    text.replace('\u3000', ' ')
+    text = text.replace('\u3000', ' ')
     # 全角→半角，重ね表現の除去
     # text = neologdn.normalize(text, repeat=3)  # スペースを削除したくないのでコメントアウト
     # 絵文字を削除
