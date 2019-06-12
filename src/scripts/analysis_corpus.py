@@ -23,8 +23,8 @@ def get_target_positions(words, parts):
 
 
 def convert_pos(pos):
-    if pos[:2] == '助詞':
-        return '助詞'
+    # if pos[:2] == '助詞':
+    #     return '助詞'
     if pos[:2] == '動詞':
         return '動詞'
     if pos[:4] == '補助記号':
@@ -58,8 +58,7 @@ def main():
 
         for target_id in target_idx:
             prev_pos = convert_pos(parts[target_id-1])
-            target_pos = convert_pos(parts[target_id])
-            part_pair_list.append(f'{prev_pos}\t{target_pos}')
+            part_pair_list.append(prev_pos)
 
             out = f'{words[target_id-1]}:{parts[target_id-1]}\t{words[target_id]}:{parts[target_id]}\n'
             f_out.write(out)
