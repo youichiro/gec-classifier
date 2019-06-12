@@ -25,8 +25,8 @@ def get_target_positions(words, parts):
 def convert_pos(pos):
     if pos[:2] == '助詞':
         return '助詞'
-    if pos[:2] == '動詞':
-        return '動詞'
+    # if pos[:2] == '動詞':
+    #     return '動詞'
     if pos[:4] == '補助記号':
         return '補助記号'
     if pos[:2] == '記号':
