@@ -53,7 +53,7 @@ def make_labeled_sentence(line, args):
     """テキストからラベル付けを行う箇所を決定し，ラベル付けした文を返す"""
     line = clean_text(line)  # クリーニング
     words, parts = tagger(line, args.mecab_dic)
-    words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
+    words, parts = Mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
     target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
     del_idx = get_del_positions(words, parts)  # 削除ラベルを挿入する位置を検出
     n_target = len(target_idx) + len(del_idx)
