@@ -12,6 +12,7 @@ sys.path.append(os.pardir)
 import random
 import argparse
 from tqdm import tqdm
+from joblib import Parallel, delayed
 from utils import clean_text
 from mecab import Mecab
 
@@ -68,9 +69,14 @@ def main():
 
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
-    for line in tqdm(lines):
-        line = clean_text(line.rstrip())  # クリーニング
-        words, parts = mecab.tagger(line)  # 形態素解析
+
+    # 形態素解析を並列処理で
+    mecab_lines = Parallel(n_jobs=-1)([delayed(mecab.tagger)(clean_text(line.rstrip())) for line in lines])
+
+    # for line in tqdm(lines):
+    #     line = clean_text(line.rstrip())  # クリーニング
+    #     words, parts = mecab.tagger(line)  # 形態素解析
+    for words, parts in tqdm(mecab_lines):
         words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
         target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
         del_idx = get_del_positions(words, parts)  # 削除ラベルを挿入する位置を検出
