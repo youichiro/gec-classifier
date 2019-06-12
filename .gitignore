@@ -9,4 +9,5 @@ models
 src/datasets/*
 src/results/*
 src/models/*
+src/scripts/data/*
 !__init__.py
