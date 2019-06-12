@@ -29,11 +29,12 @@ def main():
     save_dir = args.save_dir + '/' + args.model_dir.split('/')[-1]
     os.makedirs(save_dir, exist_ok=True)
     save_file = save_dir + '/model.hyp'
-    f_hyp = open(save_file, 'w')
     save_file_char = save_dir + '/model_char.hyp'
-    f_hyp_char = open(save_file_char, 'w')
     save_file_out = save_dir + '/model.out'
+    f_hyp = open(save_file, 'w')
+    f_hyp_char = open(save_file_char, 'w')
     f_hyp_out = open(save_file_out, 'w')
+    same_count = 0
 
     for i, (err, ans) in enumerate(zip(tqdm(error_data), answer_data)):
         err = err.replace('\n', '')
@@ -42,7 +43,11 @@ def main():
 
         f_hyp.write(hyp + '\n')
         f_hyp_char.write(' '.join(hyp) + '\n')
-        f_hyp_out.write(f'--- {i} ---\nerr: {err}\nhyp: {hyp}\nans: {ans}\n\n')
+        f_hyp_out.write(f'--- {i} ---\nerr: {err}\nhyp: {hyp}\nans: {ans}\n{is_same}\n\n')
+
+        is_same = hyp == ans
+        if is_same:
+            same_count += 1
 
     print('Saved to ' + save_file)
     print('Saved to ' + save_file_char)
@@ -54,7 +59,8 @@ def main():
     # m2scoreを実行
     cmd = f"python /lab/ogawa/tools/m2scorer/m2scorer {save_file_char} {args.save_dir}/naist_test19_char.m2 > {save_dir}/m2score.txt"
     subprocess.call(cmd, shell=True)
-    print(f'Saved to {save_dir}/m2score.txt')
+    print(f'\nSaved to {save_dir}/m2score.txt')
+    print(f'Same rate: {same_count / len(answer_data) * 100:.2}% ({same_count}/{len(answer_data)})')
 
 
 if __name__ == '__main__':
