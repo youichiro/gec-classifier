@@ -47,6 +47,13 @@ def get_del_positions(words, parts):
     return del_idx
 
 
+def get_complement_positions(words, parts):
+    """補完する箇所のインデックスを返す"""
+    comp_idx = [i for i in range(len(words))
+                if i != 0 and i != len(words) - 1 and is_complemental(parts[i-1], parts[i])]
+    return comp_idx
+
+
 def preprocess_text(text, to_kana=False, do_split=False):
     """クリーニング，かな変換を行う"""
     text = clean_text(text)

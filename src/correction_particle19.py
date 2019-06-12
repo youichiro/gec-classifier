@@ -3,7 +3,7 @@ import json
 import chainer
 from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
-from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions
+from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions, get_complement_positions
 from train import seq_convert
 
 
@@ -92,6 +92,8 @@ class Checker:
         """訂正文を返す"""
         org_words, words, parts = self._preprocess(text)
         target_idx = get_target_positions(words, parts)
+        comp_idx = get_complement_positions(words, parts)
+        all_idx = target_idx + comp_idx
 
         if self.reverse:
             target_idx = target_idx[::-1]  # 文末から訂正
