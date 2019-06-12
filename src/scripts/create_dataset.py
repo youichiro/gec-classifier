@@ -59,7 +59,7 @@ def make_labeled_sentence(text, args):
 
     # ラベル付けする位置を決める
     if n_target == 0 or len(words) > args.maxlen:
-        continue
+        return None
     elif len(target_idx) == 0:
         target_id = random.choice(del_idx)
     elif len(del_idx) == 0:
@@ -106,6 +106,7 @@ def main():
     random.shuffle(lines)  # 順序をシャッフル
 
     labeled_data = Parallel(n_jobs=-1)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
+    labeled_data = [s for s in labeled_data if s is not None]
 
     with open(args.save_valid, 'w') as f:
         for s in labeled_data[:args.valid_size]:
