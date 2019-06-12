@@ -78,17 +78,17 @@ def main():
         # ラベル付けする位置を決める
         if n_target == 0 or len(words) > args.maxlen:
             continue
-        elif len(target_ids) == 0:
-            target_id = random.choice(del_idx)
         elif len(target_idx) == 0:
+            target_id = random.choice(del_idx)
+        elif len(del_idx) == 0:
             target_id = random.choice(target_idx)
         else:
             # 文中に複数対象がある場合はランダムに1箇所選ぶ
             # 削除ラベルを10%の確率で作成する
             if random.random() < 0.1:
-                target_idx = random.choice(del_idx)
+                target_id = random.choice(del_idx)
             else:
-                target_idx = random.choice(target_idx)
+                target_id = random.choice(target_idx)
 
         # ラベル付け
         if parts[target_id][:2] == '助詞' or parts[target_id] == '助動詞':
