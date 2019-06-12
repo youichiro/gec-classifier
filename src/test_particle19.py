@@ -40,12 +40,12 @@ def main():
         err = err.replace('\n', '')
         ans = ans.replace('\n', '')
         hyp = checker.correction(err)
+        is_same = hyp == ans
 
         f_hyp.write(hyp + '\n')
         f_hyp_char.write(' '.join(hyp) + '\n')
         f_hyp_out.write(f'--- {i} ---\nerr: {err}\nhyp: {hyp}\nans: {ans}\n{is_same}\n\n')
 
-        is_same = hyp == ans
         if is_same:
             same_count += 1
 
