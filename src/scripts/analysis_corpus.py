@@ -33,6 +33,8 @@ def convert_pos(pos):
         return '記号'
     if pos[:3] == '感動詞':
         return '感動詞'
+    if pos[:2] == '名詞':
+        return '名詞'
     return pos
 
 
