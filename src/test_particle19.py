@@ -26,7 +26,7 @@ def main():
     answer_data = open(args.ans).readlines()
 
     if args.save_dir:
-        save_dir = args.save_dir + '/' + args.model_dir
+        save_dir = args.save_dir + '/' + args.model_dir.split('/')[-1]
         os.makedirs(save_dir, exist_ok=True)
         f_hyp = open(save_dir + '/model.hyp', 'w')
 
