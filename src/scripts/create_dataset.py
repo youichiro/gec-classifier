@@ -93,7 +93,7 @@ def main():
         else:
             # 削除ラベルの場合
             marked_sentence = '{} <{}> {}'.format(
-                ' '.join(words[:target_id], 'DEL', ' '.join(words[target_id:])))
+                ' '.join(words[:target_id]), 'DEL', ' '.join(words[target_id:]))
 
         save_path = args.save_valid if count < args.valid_size else args.save_train
         open(save_path, 'a').write(marked_sentence + '\n')
