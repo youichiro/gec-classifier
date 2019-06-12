@@ -32,8 +32,8 @@ def main():
     mecab = Mecab(args.mecab_dic)
     corpus = open(args.corpus).readlines()
     part_pair_list = []
-    f_out = open(args.save_dir + '/list.txt', 'w')
-    f_dic = open(args.save_dir + '/dic.txt', 'w')
+    f_out = open(args.save_dir + '/target_and_prev_list.txt', 'w')
+    f_dic = open(args.save_dir + '/target_pos_and_prev_pos_dic.txt', 'w')
 
     for line in tqdm(corpus):
         line = line.replace('\n', '')
