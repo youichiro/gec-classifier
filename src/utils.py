@@ -192,10 +192,10 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
     # 左文脈，対象単語，右文脈に分割する
     if is_train:
         # 並列処理で高速化
-        splited_lines = Parallel(n_jobs=-1, verbose=3)([delayed(split_text)(line, to_kana) for line in tqdm(lines)])
-        left_words = Parallel(n_jobs=-1, verbose=3)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
+        splited_lines = Parallel(n_jobs=-1)([delayed(split_text)(line, to_kana) for line in tqdm(lines)])
+        left_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
         targets = [line[1] for line in tqdm(splited_lines) if line[1] is not None]
-        right_words = Parallel(n_jobs=-1, verbose=3)([delayed(preprocess_text)(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None])
+        right_words = Parallel(n_jobs=-1)([delayed(preprocess_text)(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None])
     else:
         splited_lines = [split_text(line, to_kana) for line in lines]
         left_words = [preprocess_text(line[0], to_kana, do_split=True) for line in splited_lines if line[0] is not None]
