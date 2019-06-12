@@ -67,7 +67,7 @@ def main():
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
 
-    labeled_data = Parallel(n_jobs=-1, verbose=3)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
+    labeled_data = Parallel(n_jobs=-1, verbose=1)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
     labeled_data = [s for s in labeled_data if s is not None]
 
     print('Saving ...')
