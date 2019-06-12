@@ -35,7 +35,7 @@ def main():
     f_out = open(args.save_dir + '/list.txt', 'w')
     f_dic = open(args.save_dir + '/dic.txt', 'w')
 
-    for line in corpus:
+    for line in tqdm(corpus):
         line = line.replace('\n', '')
         words, parts = mecab.tagger(line)
         target_idx = get_target_positions(words, parts)
