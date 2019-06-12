@@ -87,7 +87,7 @@ class Checker:
         target_idx = get_target_positions(words, parts)
         comp_idx = get_complement_positions(words, parts)
         # 重複がないことを保証
-        assert set(target_idx) & set(comp_idx) != set()
+        assert set(target_idx) & set(comp_idx) == set()
         all_idx = target_idx + comp_idx
 
         if self.reverse:
