@@ -8,7 +8,7 @@ from train import seq_convert
 
 
 TARGETS = ['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
-           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', '']  # 19種類+削除
+           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', 'DEL']  # 19種類+削除
 TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞',
                 '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
 
@@ -112,4 +112,5 @@ class Checker:
             org_words[idx] = predict
 
         corrected_sentence = ''.join(org_words)
+        corrected_sentence = corrected_sentence.replace('DEL', '')
         return corrected_sentence

@@ -53,8 +53,8 @@ def main():
 
     # m2scoreを実行
     cmd = f"python /lab/ogawa/tools/m2scorer/m2scorer {save_file_char} {args.save_dir}/naist_test19_char.m2 > {save_dir}/m2score.txt"
-    result = subprocess.check_output(cmd, shell=True)
-    print(result)
+    subprocess.call(cmd, shell=True)
+    print(f'Saved to {save_dir}/m2score.txt')
 
 
 if __name__ == '__main__':
