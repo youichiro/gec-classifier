@@ -71,7 +71,7 @@ def main():
     random.shuffle(lines)  # 順序をシャッフル
 
     # 形態素解析を並列処理で
-    mecab_lines = Parallel(n_jobs=-1)([delayed(mecab.tagger)(clean_text(line.rstrip())) for line in lines])
+    mecab_lines = Parallel(n_jobs=-1)([delayed(mecab.tagger)(clean_text(line.rstrip())) for line in tqdm(lines)])
 
     # for line in tqdm(lines):
     #     line = clean_text(line.rstrip())  # クリーニング
