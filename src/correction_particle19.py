@@ -89,19 +89,36 @@ class Checker:
         # 重複がないことを保証
         assert set(target_idx) & set(comp_idx) == set()
         all_idx = target_idx + comp_idx
+        add_count = 0
 
         if self.reverse:
             all_idx = all_idx[::-1]  # 文末から訂正
 
-        for idx in target_idx:
-            marked_sentence = '{} <{}> {}'.format(
-                ' '.join(words[:idx]), '', ' '.join(words[idx+1:])  # 訂正対象を<>で囲む
-            )
-            test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
-                                        n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
-            predict, _ = self._predict(test_data)
-            words[idx] = predict
-            org_words[idx] = predict
+        for idx in all_idx:
+            idx += add_count  # 挿入した数だけ右にずらす
+            # 置換 or 削除
+            if idx in target_idx:
+                left_text, right_text = ' '.join(words[:idx]), ' '.join(words[idx+1:])
+                labeled_sentence = f'{left_text} <DEL> {right_text}'  # <DEL>に意味はない
+                test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
+                                            n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
+                predict, _ = self._predict(test_data)
+                words[idx] = predict
+                org_words[idx] = predict
+            # 挿入 or キープ
+            else:
+                left_text, right_text = ' '.join(words[:idx]), ' '.join(words[idx:])
+                labeled_sentence = f'{left_text} <DEL> {right_text}'
+                test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
+                                            n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
+                predict, _ = self._predict(test_data)
+
+                if predict == 'DEL':
+                    pass  # キープ
+                else:  # 挿入
+                    words = words[:idx] + [predict] + words[idx:]
+                    org_words = org_words[:idx] + [predict] + org_words[idx:]
+                    add_count += 1
 
         corrected_sentence = ''.join(org_words)
         corrected_sentence = corrected_sentence.replace('DEL', '')
