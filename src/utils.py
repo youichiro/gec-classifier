@@ -10,7 +10,10 @@ from collections import Counter
 from pykakasi import kakasi
 from joblib import Parallel, delayed
 
-
+TARGETS = set(['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
+               'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', 'DEL'])  # 19種類+削除
+TARGET_PARTS = set(['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞',
+                    '助詞-終助詞', '助詞-準体助詞', '助詞'])  # '助詞'はオリジナル設定
 IGNORE_ID = -1
 UNK_ID = 0
 split_regex = r'<[がのをにへとよりからでやはにまDEL]{1,4}>'
@@ -18,6 +21,30 @@ split_regex = re.compile(split_regex)
 kakasi = kakasi()
 kakasi.setMode('J', 'H')  # J(漢字) -> H(ひらがな)
 conv = kakasi.getConverter()
+
+
+def get_target_positions(words, parts):
+    """訂正対象箇所のインデックスを返す"""
+    target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
+                  if p in TARGET_PARTS and w in TARGETS
+                  and i != 0 and i != len(words) - 1]  # 文頭と文末の助詞は除く
+    return target_idx
+
+
+def is_complemental(prev_pos, current_pos):
+    """一つ前と今の品詞を見て，削除ラベルを挿入するかどうかを返す"""
+    if (prev_pos[:2] == '名詞' or prev_pos == '代名詞' or prev_pos == '助動詞' or prev_pos[:2] == '助詞'
+            or prev_pos[:7] == '接尾辞-名詞的' or prev_pos[:2] == '動詞') \
+            and (current_pos[:2] != '助詞' and current_pos != '助動詞'):
+        return True
+    return False
+
+
+def get_del_positions(words, parts):
+    """削除ラベルを挿入するインデックスを返す"""
+    del_idx = [i for i in range(len(words))
+               if i != 0 and i != len(words) - 1 and is_complemental(parts[i-1], parts[i])]
+    return del_idx
 
 
 def preprocess_text(text, to_kana=False, do_split=False):

@@ -60,7 +60,7 @@ def main():
     cmd = f"python /lab/ogawa/tools/m2scorer/m2scorer {save_file_char} {args.save_dir}/naist_test19_char.m2 > {save_dir}/m2score.txt"
     subprocess.call(cmd, shell=True)
     print(f'\nSaved to {save_dir}/m2score.txt')
-    print(f'Same rate: {same_count / len(answer_data) * 100:.2}% ({same_count}/{len(answer_data)})')
+    print(f'Same rate: {same_count / len(answer_data) * 100:.4}% ({same_count}/{len(answer_data)})')
 
 
 if __name__ == '__main__':

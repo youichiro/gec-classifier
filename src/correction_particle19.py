@@ -3,14 +3,9 @@ import json
 import chainer
 from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
-from utils import make_dataset, clean_text, convert_to_kana
+from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions
 from train import seq_convert
 
-
-TARGETS = ['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
-           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', 'DEL']  # 19種類+削除
-TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞',
-                '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
 
 
 class Checker:
@@ -71,12 +66,12 @@ class Checker:
             words = org_words[::]
         return org_words, words, parts
 
-    def _get_target_positions(self, words,  parts):
-        """訂正対象の位置を返す"""
-        target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
-                      if p in TARGET_PARTS and w in TARGETS \
-                      and i != 0 and i != len(words) - 1]  # 文頭と文末は除く
-        return target_idx
+    # def _get_target_positions(self, words,  parts):
+    #     """訂正対象の位置を返す"""
+    #     target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
+    #                   if p in TARGET_PARTS and w in TARGETS \
+    #                   and i != 0 and i != len(words) - 1]  # 文頭と文末は除く
+    #     return target_idx
 
     def _predict(self, test_data):
         """予測単語と確率を返す"""
@@ -96,7 +91,7 @@ class Checker:
     def correction(self, text):
         """訂正文を返す"""
         org_words, words, parts = self._preprocess(text)
-        target_idx = self._get_target_positions(words, parts)
+        target_idx = get_target_positions(words, parts)
 
         if self.reverse:
             target_idx = target_idx[::-1]  # 文末から訂正

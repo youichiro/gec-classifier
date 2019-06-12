@@ -7,19 +7,7 @@ import argparse
 from tqdm import tqdm
 from mecab import Mecab
 from collections import Counter
-
-TARGETS = ['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
-           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', '']  # 19種類+削除
-TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞',
-                '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
-
-
-def get_target_positions(words, parts):
-    """訂正対象箇所のインデックスを返す"""
-    target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
-                  if p in TARGET_PARTS and w in TARGETS
-                  and i != 0 and i != len(words) - 1]  # 文頭と文末の助詞は除く
-    return target_idx
+from utils import TARGETS, TARGET_PARTS, get_target_positions
 
 
 def convert_pos(pos):
