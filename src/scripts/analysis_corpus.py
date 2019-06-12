@@ -12,7 +12,6 @@ TARGETS = ['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 
            'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', '']  # 19種類+削除
 TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞',
                 '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
-counter = Counter()
 
 
 def get_target_positions(words, parts):
@@ -32,6 +31,7 @@ def main():
 
     mecab = Mecab(args.mecab_dic)
     corpus = open(args.corpus).readlines()
+    part_pair_list = []
     f_out = open(args.save_dir + '/list.txt', 'w')
     f_dic = open(args.save_dir + '/dic.txt', 'w')
 
@@ -41,10 +41,11 @@ def main():
         target_idx = get_target_positions(words, parts)
 
         for target_id in target_idx:
-            counter[f'{parts[target_id-1]}:{parts[target_id]}']
-            out = f'{words[target_id-1]}:{parts[target_id-1]} {words[target_id]}:{parts[target_id]}\n'
+            part_pair_list.append(f'{parts[target_id-1]}:{parts[target_id]}')
+            out = f'{words[target_id-1]}:{parts[target_id-1]}\t{words[target_id]}:{parts[target_id]}\n'
             f_out.write(out)
 
+    counter = Counter(part_pair_list)
     for k, v in counter.most_common():
         f_dic.write(f'{k}\t{v}\n')
 
