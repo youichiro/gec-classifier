@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import MeCab
-from utils import clean_text
 
 
 class Mecab:
@@ -52,10 +51,4 @@ def tagger(text, dict_path):
     for line in lines[:-2]:
         words.append(line.split('\t')[0])
         parts.append(line.split('\t')[4])
-    return words, parts
-
-
-def clean_and_tag(text, dict_path):
-    text = clean_text(text)
-    words, parts = tagger(text, dict_path)
     return words, parts
