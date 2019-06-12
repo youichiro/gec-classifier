@@ -56,6 +56,7 @@ def main():
     parser.add_argument('--valid-size', type=int, default=1000, help='Size of validation data')
     parser.add_argument('--maxlen', type=int, default=70, help='Max num of words in a sentence')
     parser.add_argument('--mecab-dic', default='/tools/env/lib/mecab/dic/unidic', help='MeCab dict path')
+    parser.add_argument('--del-rate', default=0.1, help='Rate of deletion label (0.0~1.0)')
     args = parser.parse_args()
 
     mecab = Mecab(args.mecab_dic)
@@ -84,8 +85,8 @@ def main():
             target_id = random.choice(target_idx)
         else:
             # 文中に複数対象がある場合はランダムに1箇所選ぶ
-            # 削除ラベルを10%の確率で作成する
-            if random.random() < 0.1:
+            # 削除ラベルをX%の確率で作成する
+            if random.random() < args.del_rate:
                 target_id = random.choice(del_idx)
             else:
                 target_id = random.choice(target_idx)
