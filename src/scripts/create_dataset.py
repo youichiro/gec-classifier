@@ -10,7 +10,6 @@ sys.path.append(os.pardir)
 import random
 import argparse
 from tqdm import tqdm
-import MeCab
 from utils import clean_text
 from mecab import Mecab
 
