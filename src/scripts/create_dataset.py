@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-テキストからランダムに1つの格助詞を選択してマークする
-ex) 彼に車を預ける → 彼 に 車 <を> 預ける
+- テキストからランダムに1つの訂正対象を選択してマークする
+  - ex) 彼に車を預ける → 彼 に 車 <を> 預ける
+- 訂正対象の削除パターンも作りたいので，1単語前が名詞・代名詞・助動詞・助詞・接尾辞-名詞的・動詞かつ今の品詞が助詞・助動詞でない場合，助詞の削除ラベルをつける
+  - ex) 彼に車を2台預ける → 彼 に 車 を 2 台 <DEL> 預ける
 """
 import sys
 import os
@@ -17,9 +19,9 @@ from mecab import Mecab
 # TARGETS = ['が', 'を', 'に', 'で']
 # TARGET_PART = '助詞-格助詞'
 
-TARGETS = ['が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
-           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', '']  # 19種類+削除
-TARGET_PARTS = ['助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞', '助詞-終助詞', '助詞-準体助詞', '助詞']  # '助詞'はオリジナル設定
+TARGETS = set('が', 'の', 'を', 'に', 'へ', 'と', 'より', 'から', 'で', 'や',
+           'は', 'には', 'からは', 'とは', 'では', 'へは', 'までは', 'よりは', 'まで', 'DEL')  # 19種類+削除
+TARGET_PARTS = set('助詞-格助詞', '助詞-副助詞', '助詞-係助詞', '助詞-接続助詞', '助詞-終助詞', '助詞-準体助詞', '助詞')  # '助詞'はオリジナル設定
 
 
 def get_target_positions(words, parts):
@@ -28,6 +30,22 @@ def get_target_positions(words, parts):
                   if p in TARGET_PARTS and w in TARGETS \
                   and i != 0 and i != len(words) - 1]  # 文頭と文末の助詞は除く
     return target_idx
+
+
+def is_complemental(prev_pos, current_pos):
+    """一つ前と今の品詞を見て，削除ラベルを挿入するかどうかを返す"""
+    if (prev_pos[:2] == '名詞' or prev_pos == '代名詞' or prev_pos == '助動詞' or prev_pos[:2] == '助詞'
+            or prev_pos[:7] == '接尾辞-名詞的' or prev_pos[:2] == '動詞') \
+            and (current_pos[:2] != '助詞' and current_pos != '助動詞'):
+        return True
+    return False
+
+
+def get_del_positions(words, parts):
+    """削除ラベルを挿入するインデックスを返す"""
+    del_idx = [i for i in range(len(words))
+               if i != 0 and i != len(words) - 1 and is_complemental(parts[i-1], parts[i])]
+    return del_idx
 
 
 def main():
@@ -54,16 +72,28 @@ def main():
         words, parts = mecab.tagger(line)  # 形態素解析
         words, parts = mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)  # 2単語になった助詞を1単語に変換しておく
         target_idx = get_target_positions(words, parts)  # 助詞の位置を検出
-        n_target = len(target_idx)
+        del_idx = get_del_positions(words, parts)  # 削除ラベルを挿入する位置を検出
+
+        all_idx = target_idx + del_idx  # 助詞の位置と削除ラベルの挿入位置を結合したリスト
+        n_target = len(all_idx)
+
+        # ラベル付けする位置を決める
         if not n_target or len(words) > args.maxlen:
             continue
         elif n_target == 1:
-            target_id = target_idx[0]
+            target_id = all_idx[0]
         else:
             # 文中に複数対象がある場合はランダムに1箇所選ぶ
-            target_id = random.choice(target_idx)
-        marked_sentence = '{} <{}> {}'.format(
-            ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
+            target_id = random.choice(all_idx)
+
+        # ラベル付け
+        if parts[target_id][:2] == '助詞' or parts[target_id] == '助動詞':
+            marked_sentence = '{} <{}> {}'.format(
+                ' '.join(words[:target_id]), words[target_id], ' '.join(words[target_id+1:]))
+        else:
+            # 削除ラベルの場合
+            marked_sentence = '{} <{}> {}'.format(
+                ' '.join(words[:target_id], 'DEL', ' '.join(words[target_id:])))
 
         save_path = args.save_valid if count < args.valid_size else args.save_train
         open(save_path, 'a').write(marked_sentence + '\n')
