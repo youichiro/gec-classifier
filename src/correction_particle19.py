@@ -66,13 +66,6 @@ class Checker:
             words = org_words[::]
         return org_words, words, parts
 
-    # def _get_target_positions(self, words,  parts):
-    #     """訂正対象の位置を返す"""
-    #     target_idx = [i for i, (w, p) in enumerate(zip(words, parts))
-    #                   if p in TARGET_PARTS and w in TARGETS \
-    #                   and i != 0 and i != len(words) - 1]  # 文頭と文末は除く
-    #     return target_idx
-
     def _predict(self, test_data):
         """予測単語と確率を返す"""
         if self.n_encoder == 2:
@@ -93,14 +86,16 @@ class Checker:
         org_words, words, parts = self._preprocess(text)
         target_idx = get_target_positions(words, parts)
         comp_idx = get_complement_positions(words, parts)
+        # 重複がないことを保証
+        assert set(target_idx) & set(comp_idx) != set()
         all_idx = target_idx + comp_idx
 
         if self.reverse:
-            target_idx = target_idx[::-1]  # 文末から訂正
+            all_idx = all_idx[::-1]  # 文末から訂正
 
         for idx in target_idx:
             marked_sentence = '{} <{}> {}'.format(
-                ' '.join(words[:idx]), words[idx], ' '.join(words[idx+1:])  # 訂正対象を<>で囲む
+                ' '.join(words[:idx]), '', ' '.join(words[idx+1:])  # 訂正対象を<>で囲む
             )
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
                                         n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
