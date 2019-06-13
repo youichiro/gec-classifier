@@ -70,15 +70,15 @@ def main():
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
-    parser.add_argument('--job', type=int, default=-1, help='Num of job')
+    parser.add_argument('--njob', type=int, default=-1, help='Num of job')
     args = parser.parse_args()
     print(json.dumps(args.__dict__, indent=2))
 
     # prepare
     train, converters = make_dataset(args.train, vocab_size=args.vocabsize, min_freq=args.minfreq,
-                                     n_encoder=args.n_encoder, to_kana=args.kana, emb=args.emb, job=args.job)
+                                     n_encoder=args.n_encoder, to_kana=args.kana, emb=args.emb, job=args.njob)
     w2id, class2id, initialW = converters['w2id'], converters['class2id'], converters['initialW']
-    valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana, job=args.job)
+    valid, _ = make_dataset(args.valid, w2id, class2id, n_encoder=args.n_encoder, to_kana=args.kana, job=args.njob)
     n_vocab = len(w2id)
     n_class = len(class2id)
     n_emb = initialW.shape[1] if args.emb else args.unit
