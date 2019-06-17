@@ -62,12 +62,13 @@ def main():
     parser.add_argument('--maxlen', type=int, default=70, help='Max num of words in a sentence')
     parser.add_argument('--mecab-dic', default='/tools/env/lib/mecab/dic/unidic', help='MeCab dict path')
     parser.add_argument('--del-rate', default=0.1, help='Rate of deletion label (0.0~1.0)')
+    parser.add_argument('--njob', type=int, default=-1, help='n_jobs')
     args = parser.parse_args()
 
     lines = open(args.corpus, 'r', encoding='utf-8').readlines()
     random.shuffle(lines)  # 順序をシャッフル
 
-    labeled_data = Parallel(n_jobs=-1, verbose=1)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
+    labeled_data = Parallel(n_jobs=args.njob, verbose=1)([delayed(make_labeled_sentence)(line, args) for line in tqdm(lines)])
     labeled_data = [s for s in labeled_data if s is not None]
 
     print('Saving ...')
