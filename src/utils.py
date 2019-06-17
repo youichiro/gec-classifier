@@ -82,7 +82,7 @@ def clean_text(text):
     # 全角記号の置換 (ここでは0x25A0 - 0x266Fのブロックのみを除去)
     text = re.sub(u'[■-♯]', ' ', text)
     # 文頭の「数字列+スペース」を削除
-    text = regex.sub(r'^(\p{Nd}+\p{Zs})(.*)$', r'\2', text)
+    text = regex.sub(r'^(\p{Nd}+\p{Zs})(.*)$', r'0 \2', text)
     # 文頭行末の空白は削除
     text = text.strip()
     # 複数の空白を1つにまとめる
