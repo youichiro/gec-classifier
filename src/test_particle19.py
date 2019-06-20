@@ -29,9 +29,10 @@ def main():
 
     save_dir = args.save_dir + '/' + args.model_dir.split('/')[-1]
     os.makedirs(save_dir, exist_ok=True)
-    save_file = save_dir + '/model.hyp'
-    save_file_char = save_dir + '/model_char.hyp'
-    save_file_out = save_dir + '/model.out'
+    save_file = save_dir + '/model.hyp' if not args.lm_data else '/model+lm.hyp'
+    save_file_char = save_dir + '/model_char.hyp' if not args.lm_data else '/model+lm_char.hyp'
+    save_file_out = save_dir + '/model.out' if not args.lm_data else '/model+lm.out'
+    save_file_m2score = save_dir + '/m2score.txt' if not args.lm_data else '/m2score(+lm).txt'
     f_hyp = open(save_file, 'w')
     f_hyp_char = open(save_file_char, 'w')
     f_hyp_out = open(save_file_out, 'w')
@@ -58,9 +59,9 @@ def main():
     f_hyp_out.close()
 
     # m2scoreを実行
-    cmd = f"python /lab/ogawa/tools/m2scorer/m2scorer {save_file_char} {args.save_dir}/naist_test19_char.m2 > {save_dir}/m2score.txt"
+    cmd = f"python /lab/ogawa/tools/m2scorer/m2scorer {save_file_char} {args.save_dir}/naist_test19_char.m2 > {save_file_m2score}"
     subprocess.call(cmd, shell=True)
-    print(f'\nSaved to {save_dir}/m2score.txt')
+    print(f'\nSaved to {save_file_m2score}')
     print(f'Same rate: {same_count / len(answer_data) * 100:.4}% ({same_count}/{len(answer_data)})')
 
 
