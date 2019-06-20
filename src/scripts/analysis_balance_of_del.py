@@ -11,11 +11,12 @@ from mecab import Mecab, tagger
 
 
 corpus = '../datasets/v2/bccwj+lang8/bccwj+lang8.txt'
+mecab_dic = '/tools/env/lib/mecab/dic/unidic'
 
 
 def count(line):
     line = clean_text(line)  # クリーニング
-    words, parts = tagger(line, args.mecab_dic)
+    words, parts = tagger(line, mecab_dic)
     words, parts = Mecab.preprocessing_to_particle(words, parts, TARGETS, TARGET_PARTS)
     target_idx = get_target_positions(words, parts)
     del_idx = get_del_positions(words, parts)
