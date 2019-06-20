@@ -10,7 +10,7 @@ from utils import TARGETS, TARGET_PARTS, clean_text, get_target_positions, get_d
 from mecab import Mecab, tagger
 
 
-corpus = '../datasets/v2/bccwj+lang8/bccwj+lang8.txt'
+corpus = '../datasets/v2/bccwj+lang8/bccwj+lang8.6M.txt'
 mecab_dic = '/tools/env/lib/mecab/dic/unidic'
 
 
