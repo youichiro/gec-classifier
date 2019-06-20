@@ -114,7 +114,7 @@ class Checker:
         comp_idx = get_complement_positions(words, parts)
         # 重複がないことを保証
         assert set(target_idx) & set(comp_idx) == set()
-        all_idx = target_idx + comp_idx
+        all_idx = sorted(target_idx + comp_idx)
         add_count = 0
 
         if self.reverse:
