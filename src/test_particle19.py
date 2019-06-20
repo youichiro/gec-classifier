@@ -29,10 +29,10 @@ def main():
 
     save_dir = args.save_dir + '/' + args.model_dir.split('/')[-1]
     os.makedirs(save_dir, exist_ok=True)
-    save_file = save_dir + '/model.hyp' if not args.lm_data else '/model+lm.hyp'
-    save_file_char = save_dir + '/model_char.hyp' if not args.lm_data else '/model+lm_char.hyp'
-    save_file_out = save_dir + '/model.out' if not args.lm_data else '/model+lm.out'
-    save_file_m2score = save_dir + '/m2score.txt' if not args.lm_data else '/m2score(+lm).txt'
+    save_file = save_dir + '/model.hyp' if not args.lm_data else save_dir + '/model+lm.hyp'
+    save_file_char = save_dir + '/model_char.hyp' if not args.lm_data else save_dir + '/model+lm_char.hyp'
+    save_file_out = save_dir + '/model.out' if not args.lm_data else save_dir + '/model+lm.out'
+    save_file_m2score = save_dir + '/m2score.txt' if not args.lm_data else save_dir + '/m2score(+lm).txt'
     f_hyp = open(save_file, 'w')
     f_hyp_char = open(save_file_char, 'w')
     f_hyp_out = open(save_file_out, 'w')
