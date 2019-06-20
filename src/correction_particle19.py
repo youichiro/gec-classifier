@@ -95,7 +95,6 @@ class Checker:
             target_id = words.index('<TARGET>')
             left_words = words[:target_id]
             right_words = words[target_id+1:]
-            print(left_words, right_words)
             best = ['', -10000000000000]
             for t in TARGETS:
                 t = '' if t == 'DEL' else t
