@@ -12,6 +12,7 @@ def main():
     parser.add_argument('--epoch', required=True, help='Model epoch')
     parser.add_argument('--err', required=True, help='Error corpus')
     parser.add_argument('--ans', required=True, help='Answer corpus')
+    parser.add_argument('--lm-data', default=False, help='Language model data')
     parser.add_argument('--reverse', default=False, action='store_true',
                         help='Whether to reverse the prediction order')
     parser.add_argument('--save-dir', required=True, help='Save directory')
@@ -21,7 +22,7 @@ def main():
     model_file = args.model_dir + f'/model-e{args.epoch}.npz'
     vocab_file = args.model_dir + '/vocab.json'
     opts_file = args.model_dir + '/opts.json'
-    checker = Checker(mecab_dict_file, model_file, vocab_file, opts_file, args.reverse)
+    checker = Checker(mecab_dict_file, model_file, vocab_file, opts_file, args.lm_data, args.reverse)
 
     error_data = open(args.err).readlines()
     answer_data = open(args.ans).readlines()

@@ -5,13 +5,17 @@ from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
 from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions, get_complement_positions
 from train import seq_convert
+from calculator import LM
 
 
 
 class Checker:
-    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, reverse=False):
+    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, lm_data=False, reverse=False):
         # mecab
         self.mecab = Mecab(mecab_dict_file)
+
+        # LM
+        self.lm = LM(lm_data) if lm_data else None
 
         # prepare model
         vocab = json.load(open(vocab_file, encoding='utf-8'))
@@ -81,6 +85,29 @@ class Checker:
         predict = self.id2class.get(int(predict))
         return predict, scores
 
+    def _predict_lm(self, test_data):
+        """言語モデル確率の最も高い単語と文確率を返す"""
+        if self.n_encoder == 2:
+            pass
+        else:
+            xs = test_data[0][0]
+            words = [self.id2w[i] for i in xs]
+            target_id = words.index('<TARGET>')
+            left_words = words[:target_id]
+            right_words = words[target_id+1:]
+            print(left_words, right_words)
+            best = ['', -10000000000000]
+            for t in TARGETS:
+                t = '' if t == 'DEL' else t
+                words = left_words + [t] + right_words
+                lm_score = self.lm.probability(words)
+                if lm_score > best[1]:
+                    best = [t, lm_score]
+            if best[0] == '':
+                best[0] = 'DEL'
+            return best
+
+
     def correction(self, text):
         """訂正文を返す"""
         org_words, words, parts = self._preprocess(text)
@@ -111,7 +138,10 @@ class Checker:
                 labeled_sentence = f'{left_text} <DEL> {right_text}'
                 test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
                                             n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
-                predict, _ = self._predict(test_data)
+                if self.lm:
+                    predict, _ = self._predict_lm(test_data)  # 言語モデルで予測
+                else:
+                    predict, _ = self._predict(test_data)
 
                 if predict == 'DEL':
                     pass  # キープ
