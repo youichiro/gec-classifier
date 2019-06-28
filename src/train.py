@@ -70,7 +70,7 @@ def main():
     parser.add_argument('--train', required=True, help='Train dataset file')
     parser.add_argument('--valid', required=True, help='Validation dataset file')
     parser.add_argument('--save_dir', required=True, help='Directory to save results')
-    parser.add_argument('--njob', type=int, default=-1, help='Num of job')
+    parser.add_argument('--njob', type=int, default=None, help='Num of job')
     args = parser.parse_args()
     print(json.dumps(args.__dict__, indent=2))
 

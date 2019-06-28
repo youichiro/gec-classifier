@@ -172,7 +172,7 @@ def split_text(line, to_kana):
     return left_text, target, right_text
 
 
-def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, n_encoder=2, to_kana=False, emb=None, is_train=True, job=-1):
+def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_freq=1, n_encoder=2, to_kana=False, emb=None, is_train=True, job=None):
     """
     example return:
         dataset = [
@@ -190,12 +190,17 @@ def make_dataset(path_or_data, w2id=None, class2id=None, vocab_size=40000, min_f
         lines = open(path_or_data, 'r', encoding='utf-8').readlines()
 
     # 左文脈，対象単語，右文脈に分割する
-    if is_train:
+    if is_train and job is not None:
         # 並列処理で高速化
         splited_lines = Parallel(n_jobs=job)([delayed(split_text)(line, to_kana) for line in tqdm(lines)])
         left_words = Parallel(n_jobs=job)([delayed(preprocess_text)(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None])
         targets = [line[1] for line in tqdm(splited_lines) if line[1] is not None]
         right_words = Parallel(n_jobs=job)([delayed(preprocess_text)(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None])
+    elif is_train:
+        splited_lines = [split_text(line, to_kana) for line in tqdm(lines)]
+        left_words = [preprocess_text(line[0], to_kana, do_split=True) for line in tqdm(splited_lines) if line[0] is not None]
+        targets = [line[1] for line in splited_lines if line[1] is not None]
+        right_words = [preprocess_text(line[2], to_kana, do_split=True) for line in tqdm(splited_lines) if line[2] is not None]
     else:
         splited_lines = [split_text(line, to_kana) for line in lines]
         left_words = [preprocess_text(line[0], to_kana, do_split=True) for line in splited_lines if line[0] is not None]
