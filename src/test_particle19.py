@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--lm-data', default=False, help='Language model data')
     parser.add_argument('--reverse', default=False, action='store_true',
                         help='Whether to reverse the prediction order')
+    parser.add_argument('--threshold', type=float, default=0.0, help='Threshold of correction [0.0-1.0]')
     parser.add_argument('--save-dir', required=True, help='Save directory')
     args = parser.parse_args()
 
@@ -22,7 +23,7 @@ def main():
     model_file = args.model_dir + f'/model-e{args.epoch}.npz'
     vocab_file = args.model_dir + '/vocab.json'
     opts_file = args.model_dir + '/opts.json'
-    checker = Checker(mecab_dict_file, model_file, vocab_file, opts_file, args.lm_data, args.reverse)
+    checker = Checker(mecab_dict_file, model_file, vocab_file, opts_file, args.lm_data, args.reverse, args.threshold)
 
     error_data = open(args.err).readlines()
     answer_data = open(args.ans).readlines()

@@ -131,11 +131,13 @@ class Classifier(chainer.Chain):
         chainer.reporter.report({'accuracy': accuracy.data}, self)
         return loss
 
-    def predict(self, xs, softmax=False, argmax=False):
+    def predict(self, xs, softmax=False, argmax=False, topk=1):
         concat_encodings = F.dropout(self.encoder(xs), ratio=self.dropout)
         concat_outputs = self.output(concat_encodings)
         if softmax:
             return F.softmax(concat_outputs).data
+        elif topk > 1:
+            return self.xp.argsort(concat_outputs.data[0])[::-1][:topk]
         elif argmax:
             return self.xp.argmax(concat_outputs.data, axis=1)
         else:

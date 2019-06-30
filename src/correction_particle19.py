@@ -10,7 +10,7 @@ from calculator import LM
 
 
 class Checker:
-    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, lm_data=False, reverse=False):
+    def __init__(self, mecab_dict_file, model_file, vocab_file, opts_file, lm_data=False, reverse=False, threshold=0.0):
         # mecab
         self.mecab = Mecab(mecab_dict_file)
 
@@ -54,6 +54,7 @@ class Checker:
         self.n_encoder = n_encoder
         self.to_kana = to_kana
         self.reverse = reverse
+        self.threshold = threshold
 
     def _preprocess(self, text):
         """正規化，形態素解析，かな変換を行う"""
@@ -82,8 +83,9 @@ class Checker:
             with chainer.no_backprop_mode(), chainer.using_config('train', False):
                 predict = self.model.predict(xs, argmax=True)[0]
                 scores = self.model.predict(xs, softmax=True)[0]
+                score = scores[predict]
         predict = self.id2class.get(int(predict))
-        return predict, scores
+        return predict, score
 
     def _predict_lm(self, test_data):
         """言語モデル確率の最も高い単語と文確率を返す"""
@@ -129,7 +131,8 @@ class Checker:
                 labeled_sentence = f'{left_text} <DEL> {right_text}'  # <DEL>に意味はない
                 test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
                                             n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
-                predict, _ = self._predict(test_data)
+                predict, score = self._predict(test_data)
+                predict = words[idx] if score < self.threshold else predict  # 予測確率が閾値より下なら変えない
                 if predict == 'DEL':
                     # 左にシフト
                     words = words[:idx] + words[idx+1:]
@@ -146,9 +149,10 @@ class Checker:
                 test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
                                             n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
                 if self.lm:
-                    predict, _ = self._predict_lm(test_data)  # 言語モデルで予測
+                    predict, score = self._predict_lm(test_data)  # 言語モデルで予測
                 else:
-                    predict, _ = self._predict(test_data)
+                    predict, score = self._predict(test_data)
+                predict = 'DEL' if score < self.threshold else predict  # 予測確率が閾値より下なら変えない
 
                 if predict == 'DEL':
                     pass  # キープ
