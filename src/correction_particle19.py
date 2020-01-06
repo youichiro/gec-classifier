@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
+import copy
 import chainer
 from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
 from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions, get_complement_positions
-from train import seq_convert
+from .train import seq_convert
 from calculator import LM
-
 
 
 class Checker:
@@ -66,7 +66,7 @@ class Checker:
 
         if self.to_kana:
             words = convert_to_kana(' '.join(org_words)).split(' ')  # かな変換
-            assert len(org_words) == len(words)
+            assert len(org_words) == len(words), f"\norg_words: {org_words}\nwords: {words}"
         else:
             words = org_words[::]
         return org_words, words, parts
@@ -169,3 +169,78 @@ class Checker:
         corrected_sentence = ''.join(org_words)
         corrected_sentence = corrected_sentence.replace('DEL', '')
         return corrected_sentence
+
+
+    def correction_api(self, text):
+        if not text:
+            return ''
+        org_words, words, parts = self._preprocess(text)
+        input_words = copy.deepcopy(org_words)
+        target_idx = get_target_positions(words, parts)
+        comp_idx = get_complement_positions(words, parts)
+        assert set(target_idx) & set(comp_idx) == set()
+        all_idx = sorted(target_idx + comp_idx)
+        add_count = 0
+        edits = []
+        dels = []
+
+        if self.reverse:
+            all_idx = all_idx[::-1]  # 文末から訂正
+
+        for idx in all_idx:
+            idx += add_count  # 挿入した数だけ右にずらす
+
+            # 置換 or 削除
+            if idx in target_idx:
+                left_text, right_text = ' '.join(
+                    words[:idx]), ' '.join(words[idx+1:])
+                # <DEL>に意味はない
+                labeled_sentence = f'{left_text} <DEL> {right_text}'
+                test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
+                                            n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
+                if self.lm:
+                    predict, score = self._predict_lm(test_data)
+                else:
+                    predict, score = self._predict(test_data)
+                    predict = words[idx] if score < self.threshold else predict
+                if predict == 'DEL':
+                    # 左にシフト
+                    words = words[:idx] + words[idx+1:]
+                    org_words = org_words[:idx] + org_words[idx+1:]
+                    dels.append([idx-add_count, 'del'])
+                    add_count -= 1
+                    target_idx = [idx-1 for idx in target_idx]
+                else:
+                    if org_words[idx] != predict:
+                        words[idx] = predict
+                        org_words[idx] = predict
+                        edits.append([idx, 'replace'])
+            # 挿入 or キープ
+            else:
+                left_text, right_text = ' '.join(
+                    words[:idx]), ' '.join(words[idx:])
+                labeled_sentence = f'{left_text} <DEL> {right_text}'
+                test_data, _ = make_dataset([labeled_sentence], self.w2id, self.class2id,
+                                            n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
+                if self.lm:
+                    predict, score = self._predict_lm(test_data)  # 言語モデルで予測
+                else:
+                    predict, score = self._predict(test_data)
+                    predict = 'DEL' if score < self.threshold else predict  # 予測確率が閾値より下なら変えない
+
+                if predict == 'DEL':
+                    pass  # キープ
+                else:  # 挿入
+                    # 右にシフト
+                    words = words[:idx] + [predict] + words[idx:]
+                    org_words = org_words[:idx] + [predict] + org_words[idx:]
+                    add_count += 1
+                    target_idx = [idx+1 for idx in target_idx]
+                    edits.append([idx, 'add'])
+
+        return {
+            'input_words': input_words,
+            'corrected_words': org_words,
+            'edits': edits,
+            'dels': dels
+        }

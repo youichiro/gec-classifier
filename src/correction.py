@@ -5,7 +5,7 @@ import chainer
 from nets import CNNEncoder, Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
 from utils import make_dataset, clean_text, convert_to_kana
-from train import seq_convert
+from .train import seq_convert
 
 
 class Checker:
