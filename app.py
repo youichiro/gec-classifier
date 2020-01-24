@@ -15,9 +15,10 @@ mode = 'docker'  # ('local', 'nlp', 'docker')
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 bootstrap = Bootstrap(app)
-URL_PREFIX = os.environ.get('URL_PREFIX', '')
-if URL_PREFIX:
-    URL_PREFIX = '//' + URL_PREFIX
+# URL_PREFIX = os.environ.get('URL_PREFIX', '')
+# if URL_PREFIX:
+#     URL_PREFIX = '//' + URL_PREFIX
+URL_PREFIX = 'https://app.jnlp.org/p-checker'
 
 # ver.1
 ini = configparser.ConfigParser()
@@ -54,7 +55,7 @@ def sentence_split(text):
 
 @app.route('/')
 def top():
-    return redirect('/v1')
+    return redirect(URL_PREFIX + '/v1')
 
 
 @app.route('/v1', methods=['GET', 'POST'])
