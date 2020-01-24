@@ -10,7 +10,7 @@ import configparser
 from src.correction import Checker as CheckerV1
 from src.correction_particle19 import Checker as CheckerV2
 
-mode = 'local'  # ('local', 'nlp', 'docker')
+mode = 'docker'  # ('local', 'nlp', 'docker')
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
