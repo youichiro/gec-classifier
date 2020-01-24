@@ -6,7 +6,6 @@ from nets import Classifier, ContextClassifier, AttnContextClassifier
 from mecab import Mecab
 from utils import make_dataset, clean_text, convert_to_kana, TARGETS, TARGET_PARTS, get_target_positions, get_complement_positions
 from .train import seq_convert
-from calculator import LM
 
 
 class Checker:
@@ -15,7 +14,9 @@ class Checker:
         self.mecab = Mecab(mecab_dict_file)
 
         # LM
-        self.lm = LM(lm_data) if lm_data else None
+        if lm_data:
+            from calculator import LM
+            self.lm = LM(lm_data)
 
         # prepare model
         vocab = json.load(open(vocab_file, encoding='utf-8'))
