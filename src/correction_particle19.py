@@ -17,6 +17,8 @@ class Checker:
         if lm_data:
             from calculator import LM
             self.lm = LM(lm_data)
+        else:
+            self.lm = None
 
         # prepare model
         vocab = json.load(open(vocab_file, encoding='utf-8'))
