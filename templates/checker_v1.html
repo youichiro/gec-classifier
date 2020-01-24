@@ -140,7 +140,7 @@
         inputData["input_text"] = $("#input_text").val();
         $.ajax({
             type: "GET",
-            url: "{{ prefix }}/api/correction",
+            url: "{{ prefix }}/v1/api",
             data: inputData,
             contentType: "application/JSON",
             dataType: "JSON",

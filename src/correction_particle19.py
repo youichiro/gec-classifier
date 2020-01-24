@@ -181,7 +181,8 @@ class Checker:
         assert set(target_idx) & set(comp_idx) == set()
         all_idx = sorted(target_idx + comp_idx)
         add_count = 0
-        edits = []
+        replaces = []
+        adds = []
         dels = []
 
         if self.reverse:
@@ -207,14 +208,14 @@ class Checker:
                     # 左にシフト
                     words = words[:idx] + words[idx+1:]
                     org_words = org_words[:idx] + org_words[idx+1:]
-                    dels.append([idx-add_count, 'del'])
+                    dels.append(idx-add_count)
                     add_count -= 1
                     target_idx = [idx-1 for idx in target_idx]
                 else:
                     if org_words[idx] != predict:
                         words[idx] = predict
                         org_words[idx] = predict
-                        edits.append([idx, 'replace'])
+                        replaces.append(idx)
             # 挿入 or キープ
             else:
                 left_text, right_text = ' '.join(
@@ -236,11 +237,12 @@ class Checker:
                     org_words = org_words[:idx] + [predict] + org_words[idx:]
                     add_count += 1
                     target_idx = [idx+1 for idx in target_idx]
-                    edits.append([idx, 'add'])
+                    adds.append(idx)
 
         return {
             'input_words': input_words,
             'corrected_words': org_words,
-            'edits': edits,
+            'replaces': replaces,
+            'adds': adds,
             'dels': dels
         }

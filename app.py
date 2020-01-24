@@ -41,31 +41,55 @@ checker_v2 = CheckerV2(mecab_dict_file, model_file, vocab_file, opts_file,
                        reverse=reverse, threshold=threshold)
 
 
-@app.route('/', methods=['GET', 'POST'])
+def sentence_split(text):
+    if not text:
+        return [None]
+    text = text.replace(' ', '')
+    text = text.replace('.', '。')
+    text += '。' if text[-1] != '。' else ''
+    text = text.replace('。', '。\n')
+    texts = re.split('[\t\n]', text)
+    return texts
+
+
+@app.route('/')
 def top():
-    return render_template('checker.html', prefix=URL_PREFIX)
+    return redirect('/v1')
 
 
-@app.route('/api/correction', methods=['GET'])
+@app.route('/v1', methods=['GET', 'POST'])
+def v1():
+    return render_template('checker_v1.html', prefix=URL_PREFIX)
+
+
+@app.route('/v2', methods=['GET', 'POST'])
+def v2():
+    return render_template('checker_v2.html', prefix=URL_PREFIX)
+
+
+@app.route('/v1/api', methods=['GET'])
 def api():
     text = request.args.get('input_text')
-    texts = re.split('[。．\t\n]', text)
+    texts = sentence_split(text)
     tokens = []
     for text in texts:
-        text = text.strip()
+        if not text:
+            continue
         tokens += checker_v1.correction_for_api(text)
         tokens += [["", 0]]
     return jsonify(({'tokens': tokens}))
 
 
-@app.route('/v2/api/correction', methods=['GET'])
+@app.route('/v2/api', methods=['GET'])
 def v2_correction():
     text = request.args.get('input_text')
-    if not text:
-        return ''
-    text = text.strip()
-    res = checker_v2.correction(text)
-    return res
+    texts = sentence_split(text)
+    results = []
+    for text in texts:
+        if not text:
+            continue
+        results.append(checker_v2.correction_api(text))
+    return jsonify(({'results': results}))
 
 
 if __name__ == '__main__':

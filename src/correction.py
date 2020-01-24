@@ -112,7 +112,7 @@ class Checker:
             marked_sentence = '{} <{}> {}'.format(
                 ' '.join(words[:idx]), words[idx], ' '.join(words[idx+1:]))  # 格助詞を<>で囲む
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
-                                        n_encoder=self.n_encoder, to_kana=self.to_kana)
+                                        n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
             predict, _ = self._predict(test_data)
             words[idx] = predict  # 予測に置換
             org_words[idx] = predict
@@ -154,7 +154,7 @@ class Checker:
             marked_sentence = '{} <{}> {}'.format(
                 ' '.join(err_words[:idx]), err_words[idx], ' '.join(err_words[idx+1:]))  # 格助詞を<>で囲む
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
-                                        n_encoder=self.n_encoder, to_kana=self.to_kana)
+                                        n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
             predict, _ = self._predict(test_data)  # predict: 予測単語
             predict_list.append(predict)
             # 予測に置換
@@ -223,7 +223,7 @@ class Checker:
             marked_sentence = '{} <{}> {}'.format(
                 ' '.join(words[:idx]), words[idx], ' '.join(words[idx+1:]))  # 格助詞を<>で囲む
             test_data, _ = make_dataset([marked_sentence], self.w2id, self.class2id,
-                                        n_encoder=self.n_encoder, to_kana=self.to_kana)
+                                        n_encoder=self.n_encoder, to_kana=self.to_kana, is_train=False)
             predict, scores = self._predict(test_data)
 
             if words[idx] != predict:
